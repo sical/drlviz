@@ -4,7 +4,7 @@
   <img src="images/save.gif" width="550"/>
 </p>
 
-This figure display the main view of A2C_VIZ, here you can interact with the Vizdoom environement, see the impact of those interactions on the agent inner representation, and finally observe the evolution through time and states in real time.
+This figure display the main view of DRLviz, here you can interact with the Vizdoom environement, see the impact of those interactions on the agent inner representation, and finally observe the evolution through time and states in real time.
 
 ## Additional view
 
