@@ -19,7 +19,7 @@ let line = d3.line()
         return traj_y(d[1]);
     });
 
-let myWorker = new Worker("/static/js/worker.js");
+let myWorker = new Worker("static/js/worker.js");
 
 
 function changeHighlight() {

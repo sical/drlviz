@@ -308,7 +308,7 @@
             nb_ep++;
             nbload++;
 
-            $('#epilist').append('<div style="opacity:0.5;background-color: ' + colors[tiep] + ';" class="epbox" id="boxep' + (tiep) + '"><img id="loadindep" src="/static/assets/loading.gif"></div>');
+            $('#epilist').append('<div style="opacity:0.5;background-color: ' + colors[tiep] + ';" class="epbox" id="boxep' + (tiep) + '"><img id="loadindep" src="static/assets/loading.gif"></div>');
 
             $.ajax({
                 type: "GET",
@@ -672,7 +672,7 @@
     }
 
 
-    d3.json("aaa.json")
+    d3.json("data.json")
         .on("progress", function (evt) {
             console.log(evt);
             var percentComplete = evt.loaded / evt.total;
