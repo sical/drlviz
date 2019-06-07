@@ -1,0 +1,451 @@
+input[type='range']::selection {
+    border: 0
+}
+
+.progress {
+    display: block;
+    text-align: center;
+    width: 0;
+    height: 30px;
+    background: red;
+    transition: width .3s;
+    border-radius: 10px;
+    margin-top: 1px;
+    margin-left: 1px;
+
+}
+
+.progress.hide {
+    opacity: 0;
+    transition: opacity 1.3s;
+}
+
+h3, img, i, p, button, span, h2, div, text {
+    user-select: none;
+    outline: none
+}
+
+.epbox {
+    width: 50px;
+    height: 50px;
+    margin: 6px;
+    display: inline-block;
+    cursor: pointer;
+    text-align: center;
+    vertical-align: middle;
+    border-radius: 15%;
+    position: relative;
+    float: left;
+
+}
+
+.epbox > p {
+    vertical-align: middle;
+    text-align: center;
+    position: relative;
+    top: -7%;
+    font-size: larger;
+
+}
+
+#loadindep {
+    width: 40px;
+    margin-top: 5px;
+    height: auto
+}
+
+.container {
+    display: grid;
+    grid-template-columns: 1fr 3fr 0.5fr;
+    grid-template-rows: 1fr;
+    grid-column-gap: 10px;
+    grid-row-gap: 5px;
+    justify-items: stretch;
+    align-items: stretch;
+    width: calc(100vw - 10px);
+    height: 98vh;
+}
+
+.lowop {
+    opacity: 0.3;
+}
+
+body {
+    background-color: lightgrey;
+}
+
+.container > div {
+    background-color: #F0F1F1;
+}
+
+canvas {
+    width: 1200px;
+    height: 60vh;
+    margin-right: 10px;
+}
+
+.evsvg {
+    position: absolute;
+    height: 98%
+}
+
+line {
+    shape-rendering: crispEdges;
+    vector-effect: non-scaling-stroke;
+
+    stroke: #000;
+    stroke-width: 0.5px;
+    cursor: grab;
+}
+
+#distrib-svg text {
+    /*font-size: 13pt;*/
+}
+
+* {
+    font-family: helvetica, sans-serif;
+}
+
+.display-img {
+    height: auto;
+    max-width: 100%;
+
+    z-index: 30;
+}
+
+.hypex:hover {
+    background-color: lightgrey;
+    -webkit-box-shadow: 2px 1px 40px -6px rgba(0, 0, 0, 0.61);
+    -moz-box-shadow: 2px 1px 40px -6px rgba(0, 0, 0, 0.61);
+    box-shadow: 2px 1px 40px -6px rgba(0, 0, 0, 0.61);
+}
+
+.baseline:hover {
+    background-color: lightgrey;
+    -webkit-box-shadow: 2px 1px 40px -6px rgba(0, 0, 0, 0.61);
+    -moz-box-shadow: 2px 1px 40px -6px rgba(0, 0, 0, 0.61);
+    box-shadow: 2px 1px 40px -6px rgba(0, 0, 0, 0.61);
+}
+
+.hypname:hover {
+    background-color: lightgrey;
+    -webkit-box-shadow: 2px 1px 40px -6px rgba(0, 0, 0, 0.61);
+    -moz-box-shadow: 2px 1px 40px -6px rgba(0, 0, 0, 0.61);
+    box-shadow: 2px 1px 40px -6px rgba(0, 0, 0, 0.61);
+}
+
+.hypname {
+
+    border-bottom: solid 1px black;
+    padding: 8px 8px 4px 8px;
+}
+
+.hypex img {
+    transition: transform .5s ease-in-out;
+}
+
+.hypex {
+    margin-left: -20px;
+}
+
+.hyel {
+
+    margin-bottom: 5%;
+}
+
+.hypexcon {
+
+    overflow: visible;
+    transition: max-height 0.8s ease-out;
+    background-color: #f1f1f1;
+    margin-top: 15px;
+    width: 93%;
+}
+
+.hypnote, .hypdel {
+    display: inline-block;
+    margin: 2px;
+    padding: 2px;
+}
+
+.hypoel {
+    padding: 1%;
+    margin: 1%;
+}
+
+.hypoel > div {
+    background-color: #e6e7e7;
+    vertical-align: middle;
+}
+
+.hyptb {
+    max-width: 95%;
+    cursor: pointer;
+    height: auto;
+}
+
+#epilist {
+    box-shadow: inset -32px 55px 32px rgba(0, 0, 0, 0.0), inset -1px 0px 16px rgba(0, 0, 0, 0.5), inset -3px -2px 0px rgba(255, 255, 255, 1);
+    /*display: inline-block;*/
+    width: 85%;
+    overflow-y: -webkit-paged-x;
+    height: 125%;
+    /*float: left;*/
+    margin-left: 1%;
+    position: relative;
+    float: left;
+    max-height: 130px;
+    overflow-y: auto;
+}
+
+.plusep {
+    cursor: pointer;
+}
+
+.plusep:hover {
+    transform: scale(1.1, 1.1);
+}
+
+.plussel:hover {
+    transform: scale(1.1, 1.1);
+    cursor: pointer;
+}
+
+
+.makeep {
+    cursor: pointer;
+}
+
+.makeep:hover {
+    transform: scale(1.1, 1.1);
+}
+
+.tl {
+    cursor: grab;
+}
+
+.statement p {
+    display: inline-block;
+    padding: 2px;
+}
+
+.statement div {
+    /*display: inline-block;*/
+    padding: 2px;
+}
+
+.statement, .hiddenru {
+    text-align: left;
+    background-color: #fefefe;
+    margin: 10px;
+    overflow: visible;
+    display: inline-block;
+    width: 97%;
+    padding: 4px;
+}
+
+p.if {
+
+    margin-left: 10px;
+}
+
+.dropbtn {
+    background-color: lightgrey;
+    color: white;
+    padding: 12px;
+    font-size: 16px;
+    border: none;
+    cursor: pointer;
+}
+
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: #f9f9f9;
+
+    box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+    z-index: 1;
+}
+
+.dropdown-content p {
+    color: black;
+    padding: 8px 16px;
+    margin: 1px;
+    text-decoration: none;
+    display: block;
+}
+
+.dropdown-content p:hover {
+    background-color: #f1f1f1
+}
+
+.dropdown:hover .dropdown-content {
+    display: block;
+}
+
+.dropdown:hover .dropbtn {
+    background-color: grey;
+}
+
+input[type=number]::-webkit-inner-spin-button {
+    opacity: 1;
+
+    height: 40px;
+
+}
+
+input[type=number] {
+    padding: 12px 0;
+}
+
+.node rect {
+    stroke: #333;
+    fill: #fff;
+}
+
+.edgePath path {
+    stroke: #333;
+    fill: #333;
+    stroke-width: 1.5px;
+}
+
+.stact {
+    background-color: lightgreen;
+}
+
+.stdact {
+
+    background-color: lightcoral;
+}
+
+.range-slider {
+
+.input-range {
+    -webkit-appearance: none;
+    height: 200px;
+    border-radius: 5px;
+    background: #ccc;
+    outline: none;
+    writing-mode: bt-lr; /* IE */
+    -webkit-appearance: slider-vertical; /* WebKit */
+
+}
+
+}
+
+::-moz-range-track {
+    background: #ccc;
+    border: 0;
+}
+
+input::-moz-focus-inner {
+    border: 0;
+}
+
+input[type="range"] {
+    -webkit-appearance: none;
+    -moz-apperance: none;
+    border-radius: 6px;
+    height: 12px;
+    width: 100%;
+    background-image: -webkit-gradient(
+            linear,
+            left top,
+            right top,
+            color-stop(0, #233E34),
+            color-stop(0, #C5C5C5)
+    );
+    -webkit-touch-callout: none; /* iOS Safari */
+    -webkit-user-select: none; /* Safari */
+    -khtml-user-select: none; /* Konqueror HTML */
+    -moz-user-select: none; /* Firefox */
+    -ms-user-select: none; /* Internet Explorer/Edge */
+    user-select: none;
+    /* Non-prefixed version, currently
+                                     supported by Chrome and Opera */
+}
+
+input[type='range']::-webkit-slider-thumb {
+    -webkit-appearance: none !important;
+    background-color: #E9E9E9;
+    border: 1px solid #CECECE;
+    height: 20px;
+    width: 20px;
+    -webkit-touch-callout: none; /* iOS Safari */
+    -webkit-user-select: none; /* Safari */
+    -khtml-user-select: none; /* Konqueror HTML */
+    -moz-user-select: none; /* Firefox */
+    -ms-user-select: none; /* Internet Explorer/Edge */
+    user-select: none;
+    cursor: grabbing;
+}
+
+#timeline input[type='range']::-webkit-slider-thumb {
+    -webkit-appearance: none !important;
+    background-color: #E9E9E9;
+    border: 1px solid #CECECE;
+    height: 20px;
+    width: 10px;
+    -webkit-touch-callout: none; /* iOS Safari */
+    -webkit-user-select: none; /* Safari */
+    -khtml-user-select: none; /* Konqueror HTML */
+    -moz-user-select: none; /* Firefox */
+    -ms-user-select: none; /* Internet Explorer/Edge */
+    user-select: none;
+    cursor: grabbing;
+}
+
+output {
+    position: absolute;
+    top: -24px;
+    width: 40px;
+    height: 18px;
+    border: 1px solid #e2e2e2;
+    background-color: #fff;
+    border-radius: 3px;
+    color: #777;
+    font-size: .8em;
+    line-height: 24px;
+    text-align: center;
+    overflow-y: visible;
+}
+
+.selbox {
+
+    border: solid 1px dimgray;
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+    transition: 0.3s;
+    border-radius: 5px;
+    cursor: pointer;
+    width: 80%;
+    display: inline-block;
+    padding-bottom: 10px;
+    text-align: center;
+    margin-bottom: 5px;
+
+}
+
+.selbox > h3 {
+
+    width: 80%;
+    padding-bottom: 3px;
+    border-bottom: solid 1px #333333;
+    margin-left: 10%;
+
+}
+
+
+.selbox:hover {
+    box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.2);
+}
+
+.selhigh {
+
+    box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.2);
+      border: solid 2px lightcoral;
+}

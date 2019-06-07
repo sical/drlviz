@@ -1,0 +1,2242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta charset="UTF-8">
+    <title>DRLViz</title>
+
+    <style>
+        #tsne circle {
+            fill-opacity: 0.5;
+        }
+
+        .lasso path {
+            stroke: rgb(80, 80, 80);
+            stroke-width: 2px;
+        }
+
+        .lasso .drawn {
+            fill-opacity: .05;
+        }
+
+        .lasso .loop_close {
+            fill: none;
+            stroke-dasharray: 4, 4;
+        }
+
+        .lasso .origin {
+            fill: #3399FF;
+            fill-opacity: .5;
+        }
+
+        .not_possible {
+            fill: rgb(200, 200, 200);
+        }
+
+        .possible {
+            fill: #EC888C;
+        }
+
+        .selected {
+            fill: steelblue;
+        }
+
+        #trajs g .line {
+            opacity: 0.25;
+        }
+
+        .currentepisode {
+            opacity: 1 !important;
+            stroke-width: 2px;
+        }
+
+        #up-main g {
+            pointer-events: all;
+        }
+
+        #up-main g.row:hover {
+            opacity: 0.8;
+        }
+    </style>
+
+    <script src="/static/js/jquery.min.js"></script>
+
+
+    <script src="https://d3js.org/d3.v4.min.js"></script>
+    <script src="/static/js/utils.js"></script>
+    <script src="/static/js/metric.js"></script>
+    <script src="/static/js/matrix.js"></script>
+    <script src="/static/js/matrixV.js"></script>
+    <script src="/static/js/sequence.js"></script>
+    <script src="/static/js/distribution.js"></script>
+    <script src="/static/js/trajectories.js"></script>
+    <script src="/static/js/episodeHandler.js"></script>
+    <script src="/static/js/timeline.js"></script>
+    <script src="/static/js/draghandler.js"></script>
+    <script src="/static/js/d3-lasso.min.js"></script>
+    <script src="/static/js/fuzzy.js"></script>
+    <script src="/static/js/tsne.js"></script>
+    <link href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet"
+          integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+
+    <link href="/static/css/lg.css" rel="stylesheet"/>
+    <script>
+        let episode = "episode0";
+        let whichstep = "0";
+        let scenario = "health_gathering_supreme";
+        whichstep = parseInt(whichstep);
+    </script>
+<body style="overflow-y: hidden">
+
+<script>
+
+    let megadata;
+    let colors = ["#3366cc", "#dc3912", "#ff9900", "#109618", "#990099", "#0099c6", "#dd4477", "#66aa00", "#b82e2e", "#316395", "#994499", "#22aa99", "#aaaa11", "#6633cc", "#e67300", "#8b0707", "#651067", "#329262", "#5574a6", "#3b3eac"];
+    // let colar = [['#4D3311', '#EFF0E8', '#233E34'], ['#2e0095', '#2aff73', '#a90000'], ['#362F87', '#87BD84', '#f5f33c'], ['#060614', '#ab6f71', '#fafabf'], ['#4d3311', '#eef0ea', '#233e34'], ['#3c0a54', '#5b9b89', '#f2e53f']];
+    let colar = [['#2266a6', '#effce5', '#bf6b09'], ['#2e0095', '#2aff73', '#a90000'], ['#362F87', '#87BD84', '#f5f33c'], ['#060614', '#ab6f71', '#fafabf'], ['#4d3311', '#eef0ea', '#233e34'], ['#3c0a54', '#5b9b89', '#f2e53f']];
+    let col = d3.scaleLinear().domain([-1, 0, 1]).range(colar[0]).interpolate(d3.interpolateHcl);
+    let auto = false;
+    let keymap = {};
+    let order = 0;
+    let ts_type = 1;
+    let nb_ep = 1;
+    let nb_gen = 0;
+    let nbload = 1;
+    let nbgen = 0;
+    let recording = false;
+    let bunch;
+    let sw;
+    let edit = false;
+    let can_pad = 22;
+    let rules = {};
+    let operators = ["&plusmn;", "<", ">"];
+    let st_nam = ['Health', 'HP', 'PV', 'orVar', 'ambi'];
+    let shown;
+    let rule_nb = 0;
+    let nb_main = 512;
+    let zoomer = d3.zoom().scaleExtent([1 / 2, 4]).on("zoom", zoom);
+    let wheelnb = 0;
+    let opval = 1;
+    let twidth;
+    let memst = 130;
+    let book = [];
+    let test = true;
+    let actions = ["&#x2190;", "&#x2192;", "&#x2191;", "&#x2193;", "&#x2196;", "&#x2199;", "&#x2197;", "&#x2198;"];
+    let col_size = 30;
+    let mod = true;
+    let sorttopactiv = false;
+    let hiddencrops = [[], [], []];
+    let compact = false;
+    let sortype = "0";
+    let ratio;
+    let last_circle;
+    let svg_traj, svg_tsne, svg_col1, svg_timelien, canvas_matrix, context_matrix;
+    let sel = {'delsel': []};
+    let selnb = 0;
+
+
+    let cropped = {'ruleid': '', 'sel': [], 'avgs': []};
+
+
+    let compute = {
+        '&lt;': function (x, y, z) {
+            return (x < y)
+        },
+        '&gt;': function (x, y, z) {
+            return (x > y)
+        },
+        '&plusmn;': function (x, y, z) {
+            return (x >= y * (1 - z) && x <= y * (1 + z))
+        }
+    };
+
+
+    function zoom() {
+        //   g.attr("transform", d3.event.transform);
+    }
+
+
+    var lasso_start = function () {
+        lasso.items()
+            .attr("r", 3.5) // reset size
+            .classed("not_possible", true)
+            .classed("selected", false);
+    };
+
+    var lasso_draw = function () {
+
+        // Style the possible dots
+        lasso.possibleItems()
+            .classed("not_possible", false)
+            .classed("possible", true);
+
+        // Style the not possible dot
+        lasso.notPossibleItems()
+            .classed("not_possible", true)
+            .classed("possible", false);
+    };
+
+    var lasso_end = function () {
+        // Reset the color of all dots
+        lasso.items()
+            .classed("not_possible", false)
+            .classed("possible", false);
+
+        // Style the selected dots
+        lasso.selectedItems()
+            .classed("selected", true)
+            .attr("r", 7);
+
+        lasso.selectedItems();
+        // Reset the style of the not selected dots
+        lasso.notSelectedItems()
+            .attr("r", 3.5);
+
+
+        let tot = lasso.selectedItems()._groups[0].map((d) => {
+            return parseInt(d.getAttribute('num'))
+        });
+
+        let sqs = steps2sqs(tot);
+
+        d3.selectAll('.recthf').remove();
+        d3.selectAll('.txthf').remove();
+        sqs2rule(svg_timelien, 2, sqs, 'Lasso', 'hf');
+
+        hiddencrops[0] = sqs;
+        mega_draw_matrix(megadata[episode].hiddens, context_matrix, col, can_pad, memst, hiddencrops[1], hiddencrops[2], sqs);
+    };
+
+
+    function steps2sqs(array) {
+        let sqs = [];
+        let temp = -1;
+        for (let i = 0; i < array.length; i++) {
+
+            if (temp === -1) {
+
+                temp = array[i]
+            } else if (array[i] - array[i - 1] !== 1) { //TODO: Is it always sorted?
+                if (temp !== array[i - 1]) {
+                    sqs.push([temp, array[i - 1]])
+                } else {
+                    sqs.push([(temp > 0 ? temp - 1 : 0), array[i - 1]])
+                }
+                temp = -1
+            }
+        }
+        if (temp !== -1) {
+            sqs.push([temp, array[array.length - 1]])
+        }
+
+        return sqs;
+    }
+
+
+    function sqs2rule(svg, nb, activs, name, id) {
+
+        nb += Object.keys(abstr3).length - 1;
+
+        draw_rule_activation(svg, nb * padding - rowh / 2 - 2, activs, 'steelblue', id);
+
+        svg.append('text')
+            .attr('x', '28')
+            .attr('y', nb * padding)
+            .attr('font-family', 'sans-serif')
+            .attr('font-size', '14')
+            .attr('class', 'svrl txt' + id)
+            .text(name);
+
+        svg.append('line')
+            .attr('class', 'svrl')
+            .attr('x1', 20)
+            .attr('x2', sswidth)
+            .attr('y1', (nb * padding) + 12)
+            .attr('y2', (nb * padding) + 12);
+    }
+
+
+    let lasso;
+
+    function pan() {
+
+        if (wheelnb < 2000 && d3.event.wheelDeltaY > 0) {
+            wheelnb += d3.event.wheelDeltaY;
+
+        } else if (d3.event.wheelDeltaY < 0 && wheelnb > 0) {
+            wheelnb += d3.event.wheelDeltaY;
+
+        }
+        let ctx = context_matrix;
+
+        let sc = d3.scaleLinear().domain([0, 2000]).range([1, 0.001]);
+
+
+        nb_main = 512 * Math.min(1, Math.max(sc(wheelnb), 0.01));
+
+        if (!shown) {
+            // draw_matrix(megadata[episode].hiddens, ctx, col, 0, memst, nb_main, twidth);
+
+            mega_draw_matrix(megadata[episode].hiddens, ctx, col, 0, memst, hiddencrops[1], nb_main, hiddencrops[0]);
+            hiddencrops[1] = []
+
+        } else {
+            let sqs = get_activ(shown);
+            draw_sorted_matrix(megadata[episode].hiddens, context_matrix, col, can_pad, memst, sqs, nb_main);
+        }
+
+        // console.log(sc(wheelnb));
+
+        //zoomer.translateBy(svg.transition().duration(100), d3.event.wheelDeltaX, d3.event.wheelDeltaY);
+    }
+
+    let bod = $('body');
+
+    bod.on('click', '.epbox', function () {
+        $('.epbox').css('opacity', '0.5');
+        $(this).css('opacity', '1');
+        let tepisode = 'episode' + $(this).attr('id').substring(5);
+        switchep(megadata, tepisode);
+        hard_update()
+
+    });
+
+    bod.on('click', '.plusep', async function () {
+        if (nbload < (scenario === 'my_way_home' ? 43 : 11)) {
+            let tnep = nbload;
+            let tiep = nb_ep;
+            nb_ep++;
+            nbload++;
+
+            $('#epilist').append('<div style="opacity:0.5;background-color: ' + colors[tiep] + ';" class="epbox" id="boxep' + (tiep) + '"><img id="loadindep" src="/static/assets/loading.gif"></div>');
+
+            $.ajax({
+                type: "GET",
+                url: "/loaddat/episode" + tnep,
+                success: function (d) {
+
+
+                    let id = 'episode' + (tiep);
+                    megadata[id] = tofloat($.parseJSON(d));
+                    $('#loadindep').replaceWith('<p> ' + (tnep) + ' </p>');
+                    update_traj(megadata[id].positions, svg_traj, id)
+                }
+            });
+        }
+
+    });
+
+    bod.on('click', '#up-main .row', function () {
+
+        if (mod) {
+            let num = $(this).attr('num');
+            let res = detail_combo(num);
+
+            if (Object.keys(res).length > 0) {
+                draw_details(res, num)
+            } else {
+                d3.selectAll('.detail_row').remove();
+            }
+        }
+    });
+
+
+    bod.on('click', '.makeep', async function () {
+        $('.makeep').css('opacity', '0.2');
+
+        if (!recording) {
+            recording = true;
+            let tnep = nbgen;
+            let tiep = nb_ep;
+            nb_ep++;
+            nbgen++;
+            $('#epilist').append('<div style="opacity:0.5;background-color: ' + colors[tiep] + ';" class="epbox" id="boxep' + (tiep) + '"><img id="loadindep" src="/static/assets/loading.gif"></div>');
+            $.ajax({
+                type: "GET",
+                url: "/makeep",
+                success: function (d) {
+                    let id = 'episode' + (tiep);
+                    megadata[id] = tofloat($.parseJSON(d));
+                    update_traj(megadata[id].positions, svg_traj, id);
+                    $('#loadindep').replaceWith('<p> G' + (tnep) + ' </p>');
+                    $('.makeep').css('opacity', '1');
+                    recording = false;
+                }
+            });
+        }
+    });
+
+
+    bod.on('click', '.hyptb', function () {
+            let td = $($(this).parent()[0]);
+            let stepid = td.attr('step');
+
+            whichstep = parseInt(stepid) + 1;
+            update_step(whichstep);
+            maketime();
+        }
+    );
+
+
+    function hard_update() {
+
+
+        up_clean();
+        make_combo();
+
+        cw = ((twidth - 6) * ratio) / (megadata[episode].health.length);
+        // $('#timeline').css('width', ((twidth * megadata[episode].actions.length) / 524) + 'px');
+        let ctx = context_matrix;
+        ctx.clearRect(0, 0, 99999, 12000);
+        mega_draw_matrix(megadata[episode].hiddens, ctx, col, 0, memst, [], hiddencrops[2], []);
+
+        //  draw_matrix(megadata[episode].hiddens, ctx, col, 0, memst, nb_main);
+        draw_metrics(megadata[episode], ctx, 0, 915);
+        if (episode !== 'all' || nb_ep <= 3)
+            makeState(svg_tsne, megadata[episode].hiddens);
+
+        maketime();
+
+        timeline_init(megadata[episode], twidth);
+        let keys = Object.keys(rules);
+
+        for (let i = 0; i < keys.length; i++) {
+            //  appendRule(svg_timelien, rules[keys[i]], i + 1, get_activ(keys[i]), keys[i])
+        }
+        //graph_deter();
+        update_step(whichstep);
+        update_line(whichstep);
+
+
+        hiddencrops[0] = [];
+
+        lasso = d3.lasso()
+            .closePathSelect(true)
+            .closePathDistance(100)
+            .items(d3.selectAll('.perst'))
+            .targetArea(svg_tsne)
+            .on("start", lasso_start)
+            .on("draw", lasso_draw)
+            .on("end", lasso_end);
+
+
+        svg_tsne.call(lasso);
+
+
+    }
+
+    function fastf() {
+
+        if (hiddencrops[0].length > 0) {
+
+            if (whichstep < hiddencrops[0][0][0]) {
+                whichstep = hiddencrops[0][0][0];
+                update_step(whichstep);
+                update_line(whichstep)
+            } else {
+
+                for (let i = 0; i < hiddencrops[0].length; i++) {
+
+                    if (whichstep >= hiddencrops[0][i][0] && whichstep <= hiddencrops[0][i][1]) {
+
+                        if (i < hiddencrops[0].length - 1) {
+                            whichstep = hiddencrops[0][i + 1][0];
+                            update_step(whichstep);
+                            update_line(whichstep);
+                        } else {
+                            whichstep = hiddencrops[0][i][1];
+                            update_step(whichstep);
+                            update_line(whichstep);
+                        }
+                        break;
+                    } else if (i < hiddencrops[0].length - 1) {
+                        if (whichstep >= hiddencrops[0][i][1] && whichstep <= hiddencrops[0][i + 1][0]) {
+                            whichstep = hiddencrops[0][i + 1][0];
+                            update_step(whichstep);
+                            update_line(whichstep);
+                        }
+                    }
+                }
+            }
+        }
+        maketime();
+    }
+
+    function fastb() {
+
+        if (hiddencrops[0].length > 0) {
+
+            if (whichstep > hiddencrops[0][hiddencrops[0].length - 1][1]) {
+                whichstep = hiddencrops[0][hiddencrops[0].length - 1][0];
+                update_step(whichstep);
+                update_line(whichstep)
+            } else {
+
+                for (let i = 0; i < hiddencrops[0].length; i++) {
+
+                    if (whichstep >= hiddencrops[0][i][0] && whichstep <= hiddencrops[0][i][1]) {
+
+                        if (i > 0) {
+                            whichstep = hiddencrops[0][i - 1][0];
+                            update_step(whichstep);
+                            update_line(whichstep);
+                        } else {
+                            whichstep = hiddencrops[0][i][0];
+                            update_step(whichstep);
+                            update_line(whichstep);
+                        }
+                    } else if (i > 0) {
+                        if (whichstep <= hiddencrops[0][i][0] && whichstep >= hiddencrops[0][i - 1][1]) {
+                            whichstep = hiddencrops[0][i - 1][0];
+                            update_step(whichstep);
+                            update_line(whichstep);
+                        }
+                    }
+                }
+            }
+        }
+        maketime();
+    }
+
+    function forward() {
+
+        if (megadata[episode].actions[whichstep + 1]) {
+            whichstep++;
+            update_step(whichstep);
+            update_line(whichstep);
+            maketime();
+        }
+    }
+
+    function play() {
+        if (auto)
+            forward()
+    }
+
+
+    function backward() {
+
+        if (megadata[episode].actions[whichstep - 1]) {
+            whichstep--;
+            update_step(whichstep);
+            update_line(whichstep);
+            maketime();
+        }
+    }
+
+    function update_line(step) {
+
+        let scx = d3.scaleLinear().domain([0, megadata[episode].health.length - 1]).range([0, twidth - 6]);
+        if (step >= 0 && step <= megadata[episode].health.length - 1) {
+            d3.selectAll('.tl')
+                .attr("transform", () => "translate(" + (scx(step)) + ",0)");
+        }
+
+    }
+
+    onkeydown = function (e) {
+        e = e || event;
+        keymap[e.keyCode] = e.type === 'keydown';
+
+        if (keymap[16]) { // arrowRight
+            if (keymap[39]) {
+                e.preventDefault();
+
+                fastf();
+
+            }
+            if (keymap[37]) {
+                e.preventDefault();
+                fastb();
+            }
+        }
+        else if (keymap[39]) { // arrowRight
+            if (keymap[16]) {
+                e.preventDefault();
+
+                fastf();
+            } else {
+                e.preventDefault();
+
+                forward()
+            }
+        }
+        else if (keymap[37]) { //arrow left
+            if (keymap[16]) {
+                e.preventDefault();
+
+                fastb();
+            } else {
+                e.preventDefault();
+
+                backward()
+            }
+        }
+
+        else if (keymap[32]) { // space
+            e.preventDefault();
+
+            switchauto();
+        }
+        else if (keymap[67]) { // c
+            hcrop()
+        }
+        else if (keymap[187] || keymap[107]) { // +
+
+            $('.plusep').trigger('click')
+        }
+    }
+    ;
+
+
+    onkeyup = function (e) {
+        if (e.keyCode in keymap) {
+            keymap[e.keyCode] = false;
+        }
+    };
+
+
+    function switchauto() {
+
+        auto = !auto;
+        let sp = $('#auto span');
+
+        if (auto) {
+            sp.removeClass('fa-play');
+            sp.addClass('fa-pause')
+        } else {
+            sp.removeClass('fa-pause');
+            sp.addClass('fa-play')
+        }
+
+    }
+
+    function switchscen() {
+        if (scenario === 'health_gathering_supreme') {
+
+            $.ajax({
+                type: "GET",
+                url: "/change_scenario/my_way_home",
+                processData: false,
+                contentType: false,
+                success: function (d) {
+                    document.location.reload(true);
+                }
+            })
+        } else {
+
+
+            $.ajax({
+                type: "GET",
+                url: "/change_scenario/health_gathering_supreme",
+                processData: false,
+                contentType: false,
+                success: function (d) {
+                    document.location.reload(true);
+                }
+            })
+        }
+    }
+
+    function bookmark(step) {
+
+        let context = context_matrix
+        let scx = d3.scaleLinear().domain([0, megadata[episode].health.length - 1]).range([0, 748.125]);
+
+        test = !test;
+
+
+        if (!book.includes(step)) {
+
+            if (test) {
+                context.beginPath();
+                context.strokeStyle = '#3e6fbf';
+                context.lineWidth = 1;
+                context.moveTo(scx(step), 30);
+                context.lineTo(scx(step), memst);
+                context.stroke();
+                context.drawImage($('.display-img')[0], scx(step) - (95 / 2), 2, 95, 75);
+                context.closePath();
+            } else {
+
+                context.beginPath();
+                context.strokeStyle = '#3e6fbf';
+                context.lineWidth = 1;
+                context.moveTo(scx(step), 35);
+                context.lineTo(scx(step), memst);
+                context.stroke();
+                context.drawImage($('.display-img')[0], scx(step) - (95 / 2), 35, 95, 75);
+                context.closePath();
+            }
+        }
+    }
+
+
+    d3.json("aaa.json")
+        .on("progress", function (evt) {
+            console.log(evt);
+            var percentComplete = evt.loaded / evt.total;
+
+            $('.progress').css({
+                width: percentComplete * 100 + '%'
+            });
+            if (percentComplete > 0.98) {
+                $('.progress').css({
+                    width: 100 + '%'
+                });
+                $('.progress').addClass('hide');
+                $('#loadall').remove()
+            }
+        })
+        .mimeType("application/json")
+        .get(function (data) {
+            megadata = data;
+            svg_traj = d3.select('#trajs');
+            svg_tsne = d3.select('#tsne');
+            svg_col1 = d3.select('#col1svg');
+            canvas_matrix = d3.select('#matrix-canvas');
+
+            let theight = $(window).height() * 0.68;
+
+            twidth = $('#matrix-canvas').parent().width() - 235;
+
+
+            $('#col1svg').css('width', (twidth + 28) + 'px');
+
+            $('#timeline').css('width', (twidth) + 'px');
+
+            canvas_matrix.style('height', theight + 'px');
+            canvas_matrix.style('width', twidth + 'px');
+
+            context_matrix = canvas_matrix.node().getContext('2d');
+            place_svg($('#col1svg'), $('#nb1').width());
+
+
+            context_matrix.scale(3, 3);
+            megadata[episode] = tofloat(megadata[episode]);
+            bunch = megadata[episode].hiddens[0].length;
+
+            ratio = (24948 / twidth) / 3;
+
+            cw = ((twidth - 6) * ratio) / (megadata[episode].health.length);
+
+
+            let rest = (theight * 542) / 685;
+            d3.select('#currhidd').style('height', rest);
+
+
+            ve_init_rows(d3.select('#currhidd'), megadata[episode].hiddens[whichstep], rest);
+
+            mega_draw_matrix(megadata[episode].hiddens, context_matrix, col, 0, memst, [], [], []);
+
+            //draw_matrix(megadata[episode].hiddens, ctx, col, 0, memst, nb_main, twidth);
+            draw_metrics(megadata[episode], context_matrix, 0, 915);
+            init_svg(can_pad, 5, $('#col1svg').height());
+
+
+            svg_col1.call(zoomer)
+                .on("wheel.zoom", null) // disables default zoom wheel behavior
+                .on("wheel", pan);
+
+
+            // d3.select('#seq-canvas').node().getContext('2d').scale(3, 3);
+            // setup(megadata[episode].hiddens, d3.select('#seq-canvas').node().getContext('2d'), 10, 10, whichstep, col, order, megadata[episode].hiddens[0].length, 10);
+            //init_dist_svg(megadata[episode].probabilities[whichstep], d3.select('#distrib-svg'), 350, 100);
+            draw_obs();
+
+
+            let tbbox = svg_traj.node().getBoundingClientRect();
+            maketime();
+
+            draw_traj(megadata, svg_traj, tbbox.width - 10, tbbox.height - 10);
+            makeState(svg_tsne, megadata[episode].hiddens);
+            //loadjson();
+            inieplist();
+            draw_line(megadata[episode].probabilities[whichstep], d3.select('#distrib-svg'), 80, 80);
+            setInterval(play, 180);
+            timeline_init(megadata[episode], twidth);
+            //d3.select('#seq-canvas').on('mousemove', seq_hover);
+            $('.container').css('visibility', '');
+
+            dragElement(document.getElementById('timelien'));
+
+
+            lasso = d3.lasso()
+                .closePathSelect(true)
+                .closePathDistance(100)
+                .items(d3.selectAll('.perst'))
+                .targetArea(svg_tsne)
+                .on("start", lasso_start)
+                .on("draw", lasso_draw)
+                .on("end", lasso_end);
+            svg_tsne.call(lasso);
+
+
+            svg_traj.append("g")
+                .attr("class", "brush")
+                .call(d3.brush().extent([[0, 0], [tbbox.width, tbbox.height]])
+                    .on('brush', traj_brushmove)
+                    .on('end', traj_brushend)
+                );
+
+            prefillsvg();
+
+            draw_agent_path(svg_traj, megadata[episode].positions[whichstep], megadata[episode].orientations[whichstep]);
+
+
+            d3.select('#currhidd').append("g")
+                .attr("class", "brush")
+                .call(d3.brushY().extent([[20, 0], [45, rest]])
+                    .on('brush', ve_brushmove)
+                    .on('end', ve_brushend)
+                );
+        });
+
+
+    bod.on('click', '#col1svg', function (e) {
+
+        let elemHeig = Math.min((716.8 / cropped.sel.length), 25);
+        let trt = d3.scaleLinear().domain([0, elemHeig * cropped.sel.length]).range([0, cropped.sel.length])
+        let ey = e.clientY - memst;
+
+        let selem = Math.floor((ey / elemHeig));
+
+        console.log(trt(ey));
+        console.log(selem);
+
+        if (cropped.sel[selem]) {
+            if (!filterValue(rules[cropped.ruleid].hiddens, 'id', cropped.sel[selem])) {
+                rules[cropped.ruleid].hiddens.push({'id': cropped.sel[selem], 'avg': cropped.avgs[selem], 'range': 0.4})
+            } else {
+                for (let i = 0; i < rules[cropped.ruleid].hiddens.length; i++) {
+
+                    if (rules[cropped.ruleid].hiddens[i].id === cropped.sel[selem]) {
+                        // rules[cropped.ruleid].hiddens[i].avg = cropped.avgs[selem];
+                        break;
+
+                    }
+
+                }
+            }
+
+            let sqs = hiddenactiv(cropped.sel[selem], cropped.avgs[selem], 0.3);
+
+            let scx = d3.scaleLinear().domain([0, megadata[episode].health.length - 1]).range([0, twidth - 10]);
+
+
+            svg_col1.selectAll('.rlsq').remove();
+
+            for (let i = 0; i < sqs.length; i++) {
+                svg_col1.append('rect')
+                    .attr('class', 'rlsq')
+                    .attr('x', () => {
+                        return scx(sqs[i][0]) + can_pad
+                    })
+                    .attr('y', 0)
+                    .attr('width', () => {
+                        return scx((sqs[i][1] - sqs[i][0]) + 1)
+                    })
+                    .attr('height', $('#col1svg').height())
+                    .attr('fill', col(cropped.avgs[selem]))
+                    .style('opacity', '0.3')
+            }
+
+            console.log(common(sqs, get_activ(cropped.ruleid)));
+
+        }
+    });
+
+
+    function common(hsq, rsq) {
+
+
+        let sum = 0;
+        for (let i = 0; i < megadata[episode].health.length; i++) {
+            if (inact(i, hsq) && inact(i, rsq)) {
+                sum += 1
+            }
+        }
+
+
+        return sum / Math.max(countactime(hsq), countactime(rsq))
+    }
+
+    function countactime(sqs) {
+
+        let sum = 0;
+
+        for (let i = 0; i < sqs.length; i++) {
+
+            sum += sqs[i][1] - sqs[i][0]
+
+        }
+
+        return sum
+
+    }
+
+    function inact(k, sqs) {
+
+
+        for (let i = 0; i < sqs.length; i++) {
+
+            if (sqs[i][0] <= k && sqs[i][1] >= k) {
+                return true
+            }
+
+        }
+        return false;
+    }
+
+    function activ2sq(activs, threshold) {
+
+        let sqs = [];
+        let sq = [];
+
+        for (let i = 0; i < activs.length; i++) {
+
+            if (activs[i] && sq.length === 0) {
+                sq.push(i)
+            } else if (!activs[i] && sq.length === 1) {
+
+                if (i - sq[0] >= threshold) {
+                    sq.push(i - 1);
+                    sqs.push(sq.slice());
+                    sq = []
+                }
+            } else if (sq.length === 1 && i === activs.length - 1) {
+                sq.push(i - 1);
+                sqs.push(sq.slice());
+                sq = []
+            }
+        }
+
+        return sqs;
+
+    }
+
+
+    function hiddenactiv(id, avg, range) {
+
+        let activs = [];
+        for (let i = 0; i < megadata[episode].hiddens.length; i++) {
+
+            if (megadata[episode].hiddens[i][id] <= avg * 1 + range && megadata[episode].hiddens[i][id] >= avg * 1 - range) {
+
+                activs.push(true)
+            }
+            else {
+                activs.push(false)
+            }
+        }
+        return activ2sq(activs, 0)
+    }
+
+
+    function place_svg(svg, divsize) {
+
+        sw = svg.width();
+
+        if (divsize > sw) {
+            svg.css('margin-left', 88 + 'px');
+
+
+        }
+
+
+    }
+
+
+    function draw_metrics(data, context, offx, offy) {
+        //     let scales = [d3.scaleLinear().domain([0, 525]).range([0, 748.125]), d3.scaleLinear().domain([0, 100]).range([25, 0])];
+        // draw_metric_line(data.health, context, offx, offy, scales);
+
+
+        //event_line(data.health, context, offx, offy + 40);
+        stream_acts(data.probabilities, context, offx, offy)
+    }
+
+
+    function init_svg(offx, offy, height) {
+
+        let scx = d3.scaleLinear().domain([0, megadata[episode].health.length - 1]).range([0, 748.125]);
+
+        let svg = svg_col1;
+
+
+        svg.append("g")
+            .attr("class", "brush")
+            .call(d3.brushX()
+                .extent([[offx, 0], [twidth + 14, height]])
+                .on('brush', brushmove)
+                .on('end', brushend)
+            );
+
+
+        var data = [
+            {
+                'x1': offx + scx(whichstep - 10),
+                'y1': 0 + offy,
+                'x2': offx + scx(whichstep - 10),
+                'y2': height + offy
+            },
+            {
+                'x1': offx + scx(whichstep),
+                'y1': 0 + offy - 2,
+                'x2': offx + scx(whichstep),
+                'y2': height + offy
+            },
+            {
+                'x1': offx + scx(whichstep + 10),
+                'y1': 0 + offy,
+                'x2': offx + scx(whichstep + 10),
+                'y2': height + offy
+            }
+        ];
+
+
+        var drag_behavior = d3.drag()
+            .on("start", dragstarted)
+            .on("drag", dragged);
+
+
+        var lines = svg
+            .selectAll('line')
+            .data(data)
+            .enter()
+            .append('line')
+            .attr('class', 'tl')
+            .attr('x1', function (d) {
+                return d.x1
+            })
+            .attr('x2', function (d) {
+                return d.x2
+            })
+            .attr('y1', function (d) {
+                return d.y1
+            })
+            .attr('y2', function (d) {
+                return d.y2
+            })
+            .attr('stroke-dasharray', function (d, i) {
+                if (i !== 1) {
+                    return '5,5'
+                } else {
+                    return ''
+                }
+            }).call(drag_behavior);
+
+        test_rect(svg, offx, offy, scx(whichstep - 10), scx(whichstep), height)
+
+    }
+
+
+    function test_rect(svg, offx, offy, anc1, anc2, height) {
+
+        var drag_behavior = d3.drag()
+            .on("start", dragstarted)
+            .on("drag", dragged);
+
+        svg.append('rect')
+            .attr('class', 'tl')
+            .attr('x', offx + anc1)
+            .attr('y', offy)
+            .attr('width', offx + anc2 + 10)
+            .attr('height', offy + height)
+            .attr('fill', 'rgba(51, 81, 86, 0.05)')
+            .call(drag_behavior)
+
+
+    }
+
+    function dragstarted() {
+        d3.select(this).raise();
+    }
+
+    function dragged(shape) {
+
+
+        //TODO: fix index issues
+
+        let scx = d3.scaleLinear().domain([0, megadata[episode].health.length - 1]).range([0, twidth - 6]);
+        var dx = d3.event.sourceEvent.offsetX;
+
+
+        let step = Math.round(scx.invert(dx));
+
+
+        if (step > 0 && step < megadata[episode].actions.length) {
+            update_step(step);
+            maketime();
+            d3.selectAll('.tl')
+                .attr("transform", shape => "translate(" + (dx) + ",0)");
+        }
+    }
+
+
+    function update_step(step) {
+        whichstep = step;
+        draw_obs();
+        update_rules(step);
+        draw_agent_path(svg_traj, megadata[episode].positions[step], megadata[episode].orientations[step]);
+        $('#stepind').html(step);
+        updatehps(svg_traj, megadata[episode].fov, step);
+        update_bars(megadata[episode].probabilities[whichstep], d3.select('#distrib-svg'), 80, 80, megadata[episode].actions[whichstep]);
+        find_cur_dot(svg_tsne, step);
+        ve_update(d3.select('#currhidd'), megadata[episode].hiddens[whichstep])
+
+    }
+
+    function draw_obs() {
+
+        $("#input").html("").append(toImage(megadata[episode].inputs[(whichstep > 0 ? whichstep : whichstep)], 'display-img', 'opacity:' + opval + ';'));
+        if (megadata[episode].saliencies !== undefined)
+            if (megadata[episode].saliencies.length > 0)
+                $("#input").css('background-image', "url(data:image/jpeg;base64," + megadata[episode].saliencies[(whichstep > 0 ? whichstep : whichstep)] + ')');
+
+    }
+
+
+    function ve_brushmove() {
+        //console.time('Brush handle');
+
+
+        let br = $("#currhidd .selection");
+
+        let bh = parseFloat(br.attr("height"));
+        let by = parseFloat(br.attr("y"));
+
+        let temp = [];
+        let tr = ve_rows.filter(function (d) {
+            let offy = this.getAttribute('y');
+            if (offy >= by && offy <= by + bh) {
+                temp.push([parseInt(this.getAttribute('nb')), parseInt(this.getAttribute('order'))]);
+                return true
+            }
+        });
+
+
+        temp.sort((a, b) => a[1] - b[1]);
+
+        hiddencrops[2] = temp.map(d => d[1]);
+
+        //console.timeEnd('Brush handle');
+
+        updatenbh();
+
+        mega_draw_matrix(megadata[episode].hiddens, context_matrix, col, can_pad, memst, hiddencrops[1], hiddencrops[2], hiddencrops[0]);
+
+
+    }
+
+
+    function ve_brushend() {
+        let br = $("#currhidd .selection");
+
+
+        if (br.css('display') === 'none') {
+            hiddencrops[2] = [];
+            $('#hiddensl').html(512);
+            mega_draw_matrix(megadata[episode].hiddens, context_matrix, col, can_pad, memst, hiddencrops[1], hiddencrops[2], hiddencrops[0]);
+
+        }
+
+    }
+
+    function traj_brushend() {
+        let br = $("#trajs .selection");
+
+        if (br.css('display') === 'none') {
+            hiddencrops[0] = [];
+            mega_draw_matrix(megadata[episode].hiddens, context_matrix, col, can_pad, memst, hiddencrops[1], hiddencrops[2], hiddencrops[0]);
+
+        }
+    }
+
+    function traj_brushmove() {
+        let br = $("#trajs .selection");
+
+        let bw = parseFloat(br.attr("width"));
+        let bh = parseFloat(br.attr("height"));
+        let bx = parseFloat(br.attr("x"));
+        let by = parseFloat(br.attr("y"));
+
+        let csteps = [];
+
+        for (let i = 0; i < megadata[episode].positions.length; i++) {
+
+            let currpos = megadata[episode].positions[i];
+
+            if (traj_x(currpos[0]) > bx && traj_x(currpos[0]) < bx + bw) {
+                if (traj_y(currpos[1]) > by && traj_y(currpos[1]) < by + bh) {
+                    csteps.push(i)
+                }
+            }
+        }
+        let sqs = steps2sqs(csteps);
+
+
+        d3.selectAll('.recthf').remove();
+        d3.selectAll('.txthf').remove();
+
+        sqs2rule(svg_timelien, 2, sqs, 'Traj Brush', 'hf');
+        hiddencrops[0] = sqs;
+        mega_draw_matrix(megadata[episode].hiddens, context_matrix, col, can_pad, memst, hiddencrops[1], hiddencrops[2], hiddencrops[0]);
+
+    }
+
+    function brushend() {
+        let br = $("#col1svg .selection");
+        if (br.css('display') === 'none') {
+            hiddencrops[0] = [];
+
+            mega_draw_matrix(megadata[episode].hiddens, context_matrix, col, can_pad, memst, hiddencrops[1], hiddencrops[2], []);
+        } else {
+
+            let scx = d3.scaleLinear().domain([0, megadata[episode].health.length - 1]).range([0, twidth - 10]);
+            let x = parseFloat(br.css('x').slice(0, -2));
+            let width = parseFloat(br.css('width').slice(0, -2));
+
+            hiddencrops[0] = [[Math.max(0, Math.round(scx.invert(x))) - 10, Math.min(Math.round(scx.invert(x + width)) - 10, megadata[episode].health.length - 1)]];
+
+
+            mega_draw_matrix(megadata[episode].hiddens, context_matrix, col, can_pad, memst, hiddencrops[1], hiddencrops[2], hiddencrops[0]);
+
+        }
+    }
+
+    function brushmove() {
+
+
+    }
+
+
+    bod.on('click', '.hypex', function () {
+        let con = $(this).parent();
+
+        let id = con.parent().attr('id');
+
+        console.log(id);
+        con.find('.hypex img').css('transform', 'rotate(180deg)');
+        // let res = getTBK(id);
+
+        let step = (whichstep > 0 ? whichstep : 1);
+        let all = get_values(step - 1, step);
+        all[2] = Math.round(all[2] * 100) / 100;
+        all[3] = Math.round(all[3] * 100) / 100;
+        all[4] = Math.round(all[4] * 100) / 100;
+
+        if (!con.find('.stathold').length > 0) {
+
+            con.css('border-left', 'solid black 2px');
+            //  con.prepend('<div class ="hidhold" style="min-height:100px;min-width:100px"> <div> Hiddens</div>' + make_hiddens(id) + '</div>');
+            con.prepend(make_hypex(id, "<div class='stathold' style='min-height:100px;min-width:100px'> <div> Statements</div>"));
+
+        } else {
+            con.css('border-left', '');
+            con.find('.stathold').remove();
+            con.find('.hidhold').remove();
+            con.find('.hypex img').css('transform', '');
+        }
+
+        update_rules(whichstep)
+    });
+
+
+    bod.on('click', '.namchoice', function () {
+
+        let box = $(this);
+        let con = box.parent();
+        let id = con.closest('.hyel').attr('id');
+        let oldnam = con.parent().find('.nam');
+        let oldval = con.parent().parent().find('.baseline')[0].value;
+        let stid = con.parent().parent().attr('class').split(' ')[1];
+        let n = box[0].innerHTML;
+        let old = oldnam[0].innerHTML;
+
+        for (let i = 0; i < rules[id].statements.length; i++) {
+
+            if (rules[id].statements[i].id === stid) {
+                rules[id].statements[i].name = n;
+
+                box.html(old);
+                oldnam[0].innerHTML = n;
+                break;
+
+            }
+        }
+        update_rules(whichstep);
+        let keys = Object.keys(rules);
+
+        d3.selectAll('.svrl').remove();
+        for (let i = 0; i < keys.length; i++) {
+            appendRule(svg_timelien, rules[keys[i]], i + 1, get_activ(keys[i]), keys[i])
+        }
+        //graph_deter()
+
+    });
+
+
+    bod.on('click', '.opchoice', function () {
+
+        let box = $(this);
+        let con = box.parent();
+        let id = con.closest('.hyel').attr('id');
+        let oldnam = con.parent().find('.operator');
+        //  let oldval = con.parent().parent().find('.baseline')[0].value;
+        let stid = con.parent().parent().attr('class').split(' ')[1];
+        let n = box[0].innerHTML;
+        let old = oldnam[0].innerHTML;
+
+        for (let i = 0; i < rules[id].statements.length; i++) {
+
+            if (rules[id].statements[i].id === stid) {
+                rules[id].statements[i].operator = n;
+
+                box.html(old);
+                oldnam[0].innerHTML = n;
+                break;
+
+            }
+        }
+
+        update_rules(whichstep);
+        let keys = Object.keys(rules);
+
+        d3.selectAll('.svrl').remove();
+        for (let i = 0; i < keys.length; i++) {
+            appendRule(svg_timelien, rules[keys[i]], i + 1, get_activ(keys[i]), keys[i])
+        }
+        //graph_deter()
+
+    });
+
+
+    bod.on('change', '.strange', function () {
+
+        let box = $(this);
+
+        let con = box.parent();
+
+        let id = con.closest('.hyel').attr('id');
+
+        let stid = con.parent().attr('class').split(' ')[1];
+
+        console.log(stid);
+
+
+        for (let i = 0; i < rules[id].statements.length; i++) {
+
+            if (rules[id].statements[i].id === stid) {
+                rules[id].statements[i].range = parseFloat(box.val()) / 100;
+
+                break;
+
+            }
+        }
+        update_rules(whichstep);
+
+        d3.selectAll('.svrl').remove();
+        let keys = Object.keys(rules);
+
+        for (let i = 0; i < keys.length; i++) {
+            appendRule(svg_timelien, rules[keys[i]], i + 1, get_activ(keys[i]), keys[i])
+        }
+        //  graph_deter()
+    });
+
+
+    function ruleTime(id) {
+
+        appendRule(svg_timelien, rules[id], Object.keys(rules).length, get_activ(id), id)
+
+    }
+
+
+    function addRule(x, width) {
+
+        rule_nb++;
+
+        let scx = d3.scaleLinear().domain([0, megadata[episode].health.length - 1]).range([0, twidth - 6]);
+
+        let vals = get_values(Math.round(scx.invert(x)), Math.round(scx.invert(x + width)));
+
+        let sts = init_statements(vals);
+
+        rules['rul' + rule_nb] = {'name': 'Rule' + rule_nb + ' (Click to rename)', 'statements': sts, 'color': colors[rule_nb], 'nb': sts.length, 'hiddens': []};
+
+
+//        ruleTime('rul' + rule_nb);
+        //$('#hypocont').append(div);
+        show_rule('rul' + rule_nb);
+
+
+        //  graph_deter()
+
+    }
+
+
+    function make_hypex(id, init) {
+
+        let main = init;
+
+        for (let i = 0; i < rules[id].statements.length; i++) {
+            let curstat = rules[id].statements[i];
+
+            let nam_choices = '';
+
+            for (let j = 0; j < st_nam.length; j++) {
+
+                if (st_nam[j] !== curstat.name) {
+                    nam_choices += '<p class="namchoice">' + st_nam[j] + '</p>'
+                }
+
+            }
+
+            let nam_op = '';
+
+            for (let j = 0; j < operators.length; j++) {
+
+                if (operators[j] !== curstat.operator) {
+                    nam_op += '<p class="opchoice">' + operators[j] + '</p>'
+                }
+
+            }
+
+
+            main += '<div class="statement ' + curstat.id + '"> ' +
+                '<div class="if" style="display: inline-block;padding:4px">If</div> ' +
+
+
+                '<div style="display: inline-block;" class="dropdown">' +
+                ' <button class="nam dropbtn">' + curstat.name + '</button>' +
+                ' <div class="dropdown-content">' + nam_choices + '</div> </div>' +
+
+
+                '<div style="display: inline-block;"> is </div>' +
+
+
+                '<div style="display: inline-block;" class="dropdown">' +
+                ' <button class="operator dropbtn">' + curstat.operator + ' </button>' +
+                ' <div class="dropdown-content">' + nam_op + '</div> </div>';
+
+            if (curstat.range !== undefined) {
+
+                main +=
+
+                    '<div style="display: inline-block;"> <input style ="width:35px" class="strange" type="number" min="0" max ="100" step="1" value="' + (curstat.range * 100) + '"/> %</div>';
+            }
+
+            main +=
+                '<div style="display: inline-block;padding:4px" >of</div>' +
+
+
+                '<div style="display: inline-block;"> <input type="number" style="display: inline-block;width:45px" class="baseline" value="' + (isNaN(curstat.base) ? 'nope' : Math.round(curstat.base * 100) / 100) + '"></div>' +
+
+                '<div style="display:inline-block;padding:4px"><i style="color: darkred" class="fa fa-times stadel"></i> </div>' +
+
+                ' </div>'
+        }
+        main += '</div>';
+
+        return main
+    }
+
+    bod.on('click', '.stadel ', function () {
+
+
+        let con = $(this).parent();
+
+
+        let id = con.parent().parent().parent().parent().attr('id');
+
+        let nam = $(this).parent().parent().find('.nam');
+
+        let stid = $(this).parent().parent().attr('class').split(' ')[1];
+
+
+        console.log(stid);
+
+        nam = nam[0].innerHTML;
+
+        console.log(nam);
+
+
+        for (let i = 0; i < rules[id].statements.length; i++) {
+
+            if (rules[id].statements[i].id === stid) {
+                rules[id].statements.splice(i, 1);
+                break;
+            }
+        }
+
+
+        let tcon = con.parent().parent().parent().parent();
+
+        $(this).parent().parent().parent().find('.statement').remove();
+        if (!$(this).parent().parent().parent().length > 0) {
+
+            $(this).parent().parent().parent().find('.statement').remove();
+        }
+
+        tcon.find('.stathold').append(make_hypex(id, ''));
+
+
+        show_rule(id);
+        let keys = Object.keys(rules);
+
+        d3.selectAll('.svrl').remove();
+        for (let i = 0; i < keys.length; i++) {
+            appendRule(svg_timelien, rules[keys[i]], i + 1, get_activ(keys[i]), keys[i])
+        }
+
+        //graph_deter();
+        update_rules(whichstep)
+
+    });
+
+
+    bod.on('click', '.hypname ', function () {
+        if (!edit) {
+            let text = $(this).find('span').html();
+            $(this).find('span').replaceWith($('<input type="text" id="incat"  maxlength="57" style="margin-top: 5px;vertical-align: middle"/>'));
+            $('#incat').val(text);
+            $('#incat').focus();
+
+            edit = !edit;
+        } else {
+            edit = !edit;
+            let text = $('#incat').val();
+            try {
+                $(this).find('#incat').replaceWith($('<span>').html(text));
+
+                let con = $(this).parent();
+
+                let id = con.parent().attr('id');
+
+                rules[id].name = text;
+                d3.select('.txt' + id).text('');
+                d3.select('.txt' + id).text(text)
+            }
+            catch (e) {
+            }
+        }
+    });
+
+
+    bod.on('click', '.hypnote ', function () {
+        let con = $(this).parent();
+
+        let id = con.parent().parent().attr('id');
+
+        if (shown !== undefined) {
+            if (id === shown) {
+
+                svg_col1.selectAll('.rlsq').remove();
+                shown = undefined;
+                hiddencrops[1] = [];
+                mega_draw_matrix(megadata[episode].hiddens, context_matrix, col, can_pad, memst, hiddencrops[1], hiddencrops[2], hiddencrops[0]);
+
+            } else {
+                shown = id;
+                show_rule(id)
+
+
+            }
+        } else {
+            shown = id;
+            show_rule(id)
+        }
+
+    });
+
+
+    bod.on('click', '.hypdel ', function () {
+        let con = $(this).parent();
+
+        let id = con.parent().parent().attr('id');
+
+        if (shown === id) {
+            svg_col1.selectAll('.rlsq').remove();
+            shown = undefined;
+        }
+
+
+        $(con.parent().parent()).remove();
+        delete rules[id];
+        $('.txt' + id).remove();
+        $('.rect' + id).remove();
+
+
+        d3.selectAll('.svrl').remove();
+
+        let keys = Object.keys(rules);
+
+        for (let i = 0; i < keys.length; i++) {
+            appendRule(svg_timelien, rules[keys[i]], i + 1, get_activ(keys[i]), keys[i])
+        }
+
+
+    });
+
+    function init_statements(vals) {
+        let res = [];
+
+
+        for (let i = 0; i < vals.length; i++) {
+            res.push({'name': st_nam[i], 'operator': operators[0], "range": 0.4, "base": vals[i], 'id': 'stnb' + i})
+        }
+        return res
+    }
+
+
+    function show_rule(id) {
+
+        let sqs = get_activ(id);
+        let scx = d3.scaleLinear().domain([0, megadata[episode].health.length - 1]).range([0, twidth - 6]);
+
+        svg_col1.selectAll('.rlsq').remove();
+
+        hiddencrops[1] = sqs;
+
+        //draw_sorted_matrix(megadata[episode].hiddens, d3.select('#matrix-canvas').node().getContext('2d'), col, can_pad, 10, sqs, nb_main);
+        //draw_cropped_matrix(megadata[episode].hiddens, d3.select('#matrix-canvas').node().getContext('2d'), col, can_pad, memst, sqs);
+        mega_draw_matrix(megadata[episode].hiddens, context_matrix, col, can_pad, memst, sqs, hiddencrops[2], hiddencrops[0]);
+
+        cropped.ruleid = id
+    }
+
+
+    function sort_hptaken() {
+
+        let sqs = [];
+        let mdata = megadata[episode].health;
+
+        for (let i = 1; i < mdata.length; i++) {
+            if (mdata[i] - mdata[i - 1] > 2) {
+
+                if (sqs.length > 0)
+                    if (i - 1 <= sqs[sqs.length - 1][1]) {
+                        sqs[sqs.length - 1][1] = i + 1;
+                        continue
+                    }
+                if (i > 0) {
+                    sqs.push([i - 1, i + 1])
+                }
+
+            }
+        }
+
+        //  draw_cropped_matrix(megadata[episode].hiddens, d3.select('#matrix-canvas').node().getContext('2d'), col, can_pad, memst, sqs);
+        mega_draw_matrix(megadata[episode].hiddens, context_matrix, col, can_pad, memst, sqs, hiddencrops[2], []);
+
+    }
+
+
+    function sort_pvtaken() {
+
+        let sqs = [];
+        let mdata = megadata[episode].health;
+
+        for (let i = 1; i < mdata.length; i++) {
+            if (mdata[i - 1] - mdata[i] > 8) {
+                {
+
+                    if (sqs.length > 0)
+                        if (i - 15 <= sqs[sqs.length - 1][1]) {
+                            sqs[sqs.length - 1][1] = i + 2;
+                            continue
+                        }
+                    if (i > 5) {
+                        sqs.push([i - 15, i + 2])
+                    }
+
+                }
+            }
+
+        }
+        // draw_cropped_matrix(megadata[episode].hiddens, d3.select('#matrix-canvas').node().getContext('2d'), col, can_pad, memst, sqs);
+        mega_draw_matrix(megadata[episode].hiddens, context_matrix, col, can_pad, memst, sqs, hiddencrops[2], []);
+    }
+
+
+    function sort_lowh() {
+
+        let sqs = [];
+        let mdata = megadata[episode].health;
+        let temp = [false];
+
+        for (let i = 1; i < mdata.length; i++) {
+
+            if (mdata[i] <= 20 && !temp[0]) {
+                temp[0] = i;
+                continue
+            }
+
+            if (mdata[i] > 20 && temp[0]) {
+                sqs.push([temp[0], i]);
+                temp[0] = false;
+            }
+
+        }
+        //  draw_cropped_matrix(megadata[episode].hiddens, d3.select('#matrix-canvas').node().getContext('2d'), col, can_pad, memst, sqs);
+        mega_draw_matrix(megadata[episode].hiddens, context_matrix, col, can_pad, memst, sqs, hiddencrops[2], []);
+    }
+
+    function update_rules(step) {
+
+        step = (step > 0 ? step : 1);
+        let all = get_values(step - 1, step);
+        all[2] = Math.round(all[2] * 100) / 100;
+        all[3] = Math.round(all[3] * 100) / 100;
+        all[4] = Math.round(all[4] * 100) / 100;
+
+
+        $('.statement').map(function () {
+            let activ = true;
+
+            let id = $(this).parent().closest('.hyel').attr('id');
+
+            let stsid = $(this).attr('class').split(' ')[1];
+
+            let st = filterValue(rules[id].statements, 'id', stsid);
+
+            if (st.name === 'item1' || st === 'item2') {
+                if (all[st_nam.indexOf(st.name)] !== (st.base > 0.3 ? 1 : 0)) {
+                    activ = false;
+                }
+            } else {
+                if (!compute[st.operator](all[st_nam.indexOf(st.name)], st.base, st.range)) {
+                    activ = false;
+                }
+            }
+            if (activ) {
+                $(this).removeClass('stdact');
+                $(this).addClass('stact');
+            } else {
+                $(this).addClass('stdact');
+                $(this).addClass('stdact');
+            }
+            return 'ok'
+        }).get();
+    }
+
+
+    bod.on('mouseover', '.hyel', function () {
+
+
+        let id = $(this).attr('id');
+
+
+        draw_rule_traj(svg_traj, megadata, rules[id], id)
+    });
+
+
+    bod.on('mouseout', '.hyel', function () {
+
+        $('.hdots').remove();
+    });
+
+
+    function get_activ(id) {
+
+        let sts = rules[id].statements;
+
+        let activs = [];
+
+        for (let i = 1; i <= megadata[episode].health.length; i++) {
+
+            let vals = get_values(i - 1, i);
+            let activ = true;
+
+            for (let j = 0; j < sts.length; j++) {
+                let indx = st_nam.indexOf(sts[j].name);
+
+
+                if (indx === 1 || indx === 2) {
+
+                    if (vals[indx] !== (sts[j].base > 0.5 ? 1 : 0)) {
+                        activ = false;
+                        break;
+                    }
+                } else {
+
+                    if (!compute[sts[j].operator](vals[indx], sts[j].base, sts[j].range)) {
+                        //   if (vals[indx] < sts[j].base * (1 - sts[j].range) || vals[indx] > sts[j].base * (1 + sts[j].range)) {
+                        activ = false;
+                        break;
+                    }
+                }
+            }
+            activs.push(activ)
+        }
+
+
+        return activ2sq(activs, 0);
+
+    }
+
+    bod.on('input', '#salcon', function () {
+
+        let inival = parseInt($(this).val()) / 100;
+        opval = 1 - inival;
+
+        $('.display-img').css('opacity', opval);
+        $(this).css('background-image',
+            '-webkit-gradient(linear, left top, right top, '
+            + 'color-stop(' + inival + ', #233E34), '
+            + 'color-stop(' + inival + ', #C5C5C5)'
+            + ')'
+        );
+
+    });
+
+
+    bod.on('input', '.input-range', function () {
+
+        let temp = $(this).val();
+
+        let id = $(this).parent().parent().attr('nb');
+
+        console.log(id);
+
+        hiddentry(parseFloat(temp), id);
+
+
+    });
+
+    bod.on('change', '.input-range', function () {
+
+        update_bars(megadata[episode].probabilities[whichstep], d3.select('#distrib-svg'), 80, 80, megadata[episode].actions[whichstep])
+    });
+
+
+    function hiddentry(h, id) {
+        let form = new FormData();
+        let ht = megadata[episode].hiddens[whichstep].slice();
+
+        ht[id] = h;
+
+        form.append("hiddens", ht);
+        let res;
+
+        $.ajax({
+            type: "POST",
+            url: "/hiddentry",
+            processData: false,
+            contentType: false,
+            data: form,
+            success: function (d) {
+                console.log(d);
+                res = JSON.parse(JSON.parse(d)['result']);
+                console.log(res);
+                update_bars(res, d3.select('#distrib-svg'), 80, 80, res.indexOf(Math.max(...res)))
+            }
+        });
+    }
+
+
+    function maketime() {
+
+
+        $('#timebar').remove();
+        $('#timeline').append('<input id="timebar" style="outline: none;" type="range" min="0" max="' + (megadata[episode].actions.length - 1) + '" step="1" value="' + whichstep + '">');
+
+        let tbar = $('#timebar');
+
+        let val = (tbar.val() - tbar.attr('min')) / (tbar.attr('max') - tbar.attr('min'));
+
+        tbar.css('background-image',
+            '-webkit-gradient(linear, left top, right top, '
+            + 'color-stop(' + val + ', #233E34), '
+            + 'color-stop(' + val + ', #C5C5C5)'
+            + ')'
+        );
+
+        $('#timeline input[type="range"]').on('input', function () {
+            var val = ($(this).val() - $(this).attr('min')) / ($(this).attr('max') - $(this).attr('min'));
+            whichstep = (parseInt($(this).val()) >= 0 ? parseInt($(this).val()) : 0);
+            update_step(whichstep);
+            update_line(whichstep);
+
+            $(this).css('background-image',
+                '-webkit-gradient(linear, left top, right top, '
+                + 'color-stop(' + val + ', #233E34), '
+                + 'color-stop(' + val + ', #C5C5C5)'
+                + ')'
+            );
+        });
+
+        let control = $('#timebar'),
+            controlMin = control.attr('min'),
+            controlMax = control.attr('max'),
+            controlVal = control.val();
+
+
+        let thumb = 10;
+
+        let range = controlMax - controlMin;
+        let position = ((controlVal - controlMin) / range) * 100;
+
+        let positionOffset = Math.round(thumb * position / 100) - (thumb / 2) + 20;
+        let output = $('#tooltip1');
+        output
+            .css('left', 'calc(' + position + '% - ' + positionOffset + 'px)')
+            .text(controlVal);
+
+    }
+
+    function reset() {
+        let ctx = context_matrix;
+        ctx.clearRect(0, 0, 99999, 915);
+        mega_draw_matrix(megadata[episode].hiddens, ctx, col, 0, memst, [], [], []);
+
+        hiddencrops = [[], [], []];
+    }
+
+    function hcrop() {
+        compact = !compact;
+        mega_draw_matrix(megadata[episode].hiddens, context_matrix, col, can_pad, memst, hiddencrops[1], hiddencrops[2], hiddencrops[0]);
+
+        if (compact) {
+            $('#compact').html(' <span class="fa fa-expand fa-lg" aria-hidden="true"></span>')
+        } else {
+            $('#compact').html(' <span class="fa fa-compress fa-lg" aria-hidden="true"></span>')
+
+        }
+    }
+
+    bod.on('change', '#sort-sel', function () {
+
+        sortype = $(this).val();
+        mega_draw_matrix(megadata[episode].hiddens, context_matrix, col, can_pad, memst, hiddencrops[1], hiddencrops[2], hiddencrops[0]);
+
+    });
+
+
+    bod.on('input', '#timebar', function () {
+
+        let control = $(this),
+            controlMin = control.attr('min'),
+            controlMax = control.attr('max'),
+            controlVal = control.val();
+
+        let thumb = 10;
+
+        let range = controlMax - controlMin;
+        let position = ((controlVal - controlMin) / range) * 100;
+
+        let positionOffset = Math.round(thumb * position / 100) - (thumb / 2) + 20;
+        let output = $('#tooltip1');
+        output
+            .css('left', 'calc(' + position + '% - ' + positionOffset + 'px)')
+            .text(controlVal);
+    });
+
+
+    function sel2mask(data) {
+
+
+        console.log(data);
+
+        $('#epilist').append('<div style="opacity:0.5;background-color: steelblue;" class="epbox" id="boxepgen' + nb_gen + '"><img id="loadindep" src="/static/assets/loading.gif"></div>');
+        let res = [];
+        for (let i = 0; i < megadata[episode].hiddens[0].length; i++) {
+
+            if (data.includes(i)) {
+                res.push(1)
+            } else {
+                res.push(0.02)
+            }
+
+        }
+
+        let form = new FormData();
+
+        form.append('mask', res);
+
+        $.ajax({
+            type: "POST",
+            url: "/gen_epz",
+            processData: false,
+            contentType: false,
+            data: form,
+            success: function (d) {
+                let id = 'episode' + 'gen' + nb_gen;
+                nb_gen++;
+                megadata[id] = tofloat($.parseJSON(d));
+                $('#loadindep').replaceWith('<p> Gen </p>');
+                update_traj(megadata[id].positions, svg_traj, id)
+            }
+        });
+    }
+
+    function reverse_sel2mask(data) {
+
+
+        console.log(data);
+
+        $('#epilist').append('<div style="opacity:0.5;background-color: steelblue;" class="epbox" id="boxepgen' + nb_gen + '"><img id="loadindep" src="/static/assets/loading.gif"></div>');
+        let res = [];
+        for (let i = 0; i < megadata[episode].hiddens[0].length; i++) {
+
+            if (!data.includes(i)) {
+                res.push(1)
+            } else {
+                res.push(0.02)
+            }
+
+        }
+
+        let form = new FormData();
+
+        form.append('mask', res);
+
+        $.ajax({
+            type: "POST",
+            url: "/gen_epz",
+            processData: false,
+            contentType: false,
+            data: form,
+            success: function (d) {
+                let id = 'episode' + 'gen' + nb_gen;
+                nb_gen++;
+                megadata[id] = tofloat($.parseJSON(d));
+                $('#loadindep').replaceWith('<p> Gen </p>');
+                update_traj(megadata[id].positions, svg_traj, id)
+            }
+        });
+    }
+
+
+    bod.on('click', '.selbox', function (e) {
+
+        if (e.target.className !== 'selld')
+            $(this).toggleClass('selhigh');
+    });
+
+
+    function saveHandle() {
+
+        let target = $('.selhigh');
+
+        if (!target.length) {
+            target = $('#delsel')
+        }
+
+        let id = '' + target.attr('id');
+
+        let temp = hiddencrops[2].map((d) => {
+            return old_res[d]
+        });
+
+        if (sel[id]) {
+
+            if (hiddencrops[2].length)
+                sel[id] = sel['' + id].concat(temp);
+            sel['' + id].unique();
+        } else {
+            sel[id] = temp
+        }
+
+    }
+
+
+    bod.on('click', '.plussel', function () {
+
+
+        $(this).parent().parent().prepend(" " +
+            "<div id=\"sel" + selnb + "\" class=\"selbox\">\n" +
+            "\n" +
+            "   <h3>Save" + selnb + "</h3>\n" +
+            "   <div>\n" +
+            "       <button class='seldel'> Delete</button>\n" +
+            "       <button class='selld'> See</button>\n" +
+            "   </div>\n" +
+            " </div>");
+
+        selnb++;
+    });
+
+
+    bod.on('click', '.seldel', function (e) {
+        let source = $(this).parent().parent().attr('id');
+
+
+        delete sel[source];
+
+        $(this).parent().parent().remove();
+
+    });
+
+    bod.on('click', '.selld', function (e) {
+
+        e.preventDefault();
+
+        let source = $(this).parent().parent().attr('id');
+
+        console.log(source);
+        console.log(sel[source]);
+
+        let temp = sel[source].map((d) => {
+            return old_res.indexOf(d)
+        });
+
+        $('#hiddensl').html(temp.length)
+
+        mega_draw_matrix(megadata[episode].hiddens, context_matrix, col, can_pad, memst, hiddencrops[1], temp, hiddencrops[0]);
+    });
+
+
+    function updatenbh() {
+
+        $('#hiddensl').html(hiddencrops[2].length)
+    }
+
+</script>
+
+<div id="loadall" style="width: 40%;position: absolute;z-index: 999;top: 40%;left: 30%;">
+    <div style="text-align: center;vertical-align: middle;width: 100%">
+        <p style="margin-bottom: 15px;font-size: 20pt"> Loading <span class="fa fa-spinner fa-spin fa-lg"></span></p>
+        <div style="width: 100%;height: 32px;background-color: lightgrey;border: #6d6b6e 1px solid;border-radius: 10px;">
+            <div class="progress"></div>
+        </div>
+    </div>
+</div>
+
+
+<div class="container" style="visibility: hidden;overflow-y: hidden">
+    <div style="grid-column: 1;grid-template-rows: 1fr 1fr 1fr 1fr;grid-row-gap: 5px;position: relative;max-width: 640px">
+        <div style="display: grid;grid-row: 1;max-height: 30%;text-align: center;padding: 10px" id="input-cont">
+            <p id="stepind" style="display: inline-block;top:12px;left:5%;position: absolute;opacity: 1 !important;z-index: 200;color: white;font-weight: 600">0</p>
+            <svg id="distrib-svg" width="80" height="80" style="display: inline-block;top:16px;right:16px;position: absolute;background-color: white;opacity: 1 !important;z-index: 200">
+
+
+            </svg>
+            <div id="input" style="background-size: contain;z-index: 100;max-height: min-content">
+
+
+            </div>
+            <div style="margin-top: 10px"><i class="fa fa-adjust fa-lg"></i> <input id="salcon" type="range" min="0" max="100" style=" outline: none;width: 80%" step="5" value="0"/> <i class="fa fa-moon fa-lg"></i></div>
+        </div>
+        <div style="grid-row: 2;text-align: center;height: 30%;">
+            <svg id="trajs" width="60%" height="90%" style="padding: 5px;">
+
+            </svg>
+        </div>
+        <div style="grid-row: 3;text-align: center;height: 30%;margin-top: 2%">
+            <svg id="tsne" width="90%" height="80%" style="padding: 5px;">
+
+            </svg>
+        </div>
+
+        <div style="grid-row: 4;height: 10%;margin-top: 2%">
+            <div style="height: 60px;text-align: center;position: relative">
+                <div id="epilist" style="text-align: center;overflow-x: auto">
+
+                </div>
+                <div>
+                    <img class="plusep" style="height: 25px;width: auto;border: black 2px solid;padding: 2px;position: absolute;right: 5%;top:40%" src="/static/assets/001-plus-1.png">
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+
+    <div id='nb1' style="grid-column: 2;min-width: 720px;overflow-y: hidden">
+        <div style="height: 26px;width: 100%">
+            <div style="vertical-align: text-top;display: inline-block;color: #fff;z-index: 888;min-width: 5%;text-align: center;margin:5px" id="buttons">
+                <div>
+                    <button type="button" id="thong" class="btn btn-default btn-lg" onclick="backward()" style="padding: 2px;font-size:0.75rem;width: 30px" aria-label="Left Align">
+                        <span class="fa fa-arrow-left fa-lg" aria-hidden="true"></span>
+                    </button>
+                    <button type="button" id="auto" class="btn btn-default btn-lg" onclick="switchauto()" style="padding: 2px;font-size:0.75rem;width: 30px" aria-label="Left Align">
+                        <span class="fa fa-play fa-lg" aria-hidden="true"></span>
+                    </button>
+                    <button type="button" id="thing" class="btn btn-default btn-lg" onclick="forward()" style="padding: 2px;font-size:0.75rem;width: 30px" aria-label="Left Align">
+                        <span class="fa fa-arrow-right fa-lg" aria-hidden="true"></span>
+                    </button>
+
+                    <button type="button" id="res" class="btn btn-default btn-lg" onclick="reset()" style="padding: 2px;font-size:0.75rem;width: 30px" aria-label="Left Align">
+                        <span class="fa fa-repeat fa-lg" aria-hidden="true"></span>
+                    </button>
+
+                    <button type="button" id="compact" class="btn btn-default btn-lg" onclick="hcrop()" style="padding: 2px;font-size:0.75rem;width: 30px" aria-label="Left Align">
+                        <span class="fa fa-compress fa-lg" aria-hidden="true"></span>
+                    </button>
+
+                    <select id="sort-sel">
+                        <option value="0">No sort</option>
+                        <option value="1">Activation</option>
+                        <option value="2">Change</option>
+                        <option value="3">Stable</option>
+                        <option value="4">Similar</option>
+                        <option value="5">Projection</option>
+                        <option value="6">Projection Abs</option>
+                    </select>
+                </div>
+            </div>
+            <button onclick="saveHandle()" type="button" class="btn btn-default btn-lg" style="float: right;margin-right: 10px;margin-top: 5px">Save</button>
+
+
+            <div style="width: 80%;margin-top: 2%;display: inline-block;position: relative;margin-left:105px" id="timeline">
+                <output id="tooltip1" name="rangeVal">50</output>
+            </div>
+        </div>
+        <div style="min-height: 700px;min-width: 600px">
+
+
+            <svg class="evsvg" style="margin-top: 50px" id="col1svg">
+
+            </svg>
+
+
+            <canvas height="2850" width="24948" id="matrix-canvas" style="margin-left: 110px"></canvas>
+
+
+            <div style="float: right;margin-top: 4.8%;">
+                <p id="hiddensl">
+                    512
+                </p>
+
+                <svg width="80" height="480" style=" border-left: solid #333333 1px; " id="currhidd">
+
+                </svg>
+            </div>
+
+            <svg id="timelien" width="100%" height="300px" style="float: right;margin-right: 10px">
+
+            </svg>
+
+        </div>
+
+
+    </div>
+
+    <div style="grid-column: 3;text-align: center;position: relative">
+        <div id="sellist" style="padding-top: 20px;text-align: center">
+
+            <div id="delsel" class="selbox">
+
+                <h3>Default</h3>
+                <div>
+                    <button class="selld"> See</button>
+                </div>
+            </div>
+
+            <div>
+                <img class="plussel" style="height: 25px;width: auto;border: black 2px solid;padding: 2px;position: absolute;right: 45%;margin-top: 10px" src="/static/assets/001-plus-1.png">
+            </div>
+
+
+        </div>
+
+    </div>
+
+
+</div>
+
+
+</body>
+</html>
