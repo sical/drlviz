@@ -1,0 +1,7 @@
+.idea/
+venv/
+static/logs/
+static/offline/
+__pycache__/
+_vizdoom.ini
+
