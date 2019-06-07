@@ -350,7 +350,7 @@
             let tiep = nb_ep;
             nb_ep++;
             nbgen++;
-            $('#epilist').append('<div style="opacity:0.5;background-color: ' + colors[tiep] + ';" class="epbox" id="boxep' + (tiep) + '"><img id="loadindep" src="/static/assets/loading.gif"></div>');
+            $('#epilist').append('<div style="opacity:0.5;background-color: ' + colors[tiep] + ';" class="epbox" id="boxep' + (tiep) + '"><img id="loadindep" src="static/assets/loading.gif"></div>');
             $.ajax({
                 type: "GET",
                 url: "/makeep",
@@ -1939,7 +1939,7 @@
 
         console.log(data);
 
-        $('#epilist').append('<div style="opacity:0.5;background-color: steelblue;" class="epbox" id="boxepgen' + nb_gen + '"><img id="loadindep" src="/static/assets/loading.gif"></div>');
+        $('#epilist').append('<div style="opacity:0.5;background-color: steelblue;" class="epbox" id="boxepgen' + nb_gen + '"><img id="loadindep" src="static/assets/loading.gif"></div>');
         let res = [];
         for (let i = 0; i < megadata[episode].hiddens[0].length; i++) {
 
@@ -1976,7 +1976,7 @@
 
         console.log(data);
 
-        $('#epilist').append('<div style="opacity:0.5;background-color: steelblue;" class="epbox" id="boxepgen' + nb_gen + '"><img id="loadindep" src="/static/assets/loading.gif"></div>');
+        $('#epilist').append('<div style="opacity:0.5;background-color: steelblue;" class="epbox" id="boxepgen' + nb_gen + '"><img id="loadindep" src="static/assets/loading.gif"></div>');
         let res = [];
         for (let i = 0; i < megadata[episode].hiddens[0].length; i++) {
 
@@ -2136,7 +2136,7 @@
 
                 </div>
                 <div>
-                    <img class="plusep" style="height: 25px;width: auto;border: black 2px solid;padding: 2px;position: absolute;right: 5%;top:40%" src="/static/assets/001-plus-1.png">
+                    <img class="plusep" style="height: 25px;width: auto;border: black 2px solid;padding: 2px;position: absolute;right: 5%;top:40%" src="static/assets/001-plus-1.png">
                 </div>
             </div>
 
@@ -2226,7 +2226,7 @@
             </div>
 
             <div>
-                <img class="plussel" style="height: 25px;width: auto;border: black 2px solid;padding: 2px;position: absolute;right: 45%;margin-top: 10px" src="/static/assets/001-plus-1.png">
+                <img class="plussel" style="height: 25px;width: auto;border: black 2px solid;padding: 2px;position: absolute;right: 45%;margin-top: 10px" src="static/assets/001-plus-1.png">
             </div>
 
 

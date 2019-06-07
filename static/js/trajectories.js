@@ -235,7 +235,7 @@ async function selTsne(data, ts_type) {
 function makeState(svg, data) {
 
     myWorker.terminate();
-    myWorker = new Worker("/static/js/worker.js");
+    myWorker = new Worker("static/js/worker.js");
 
     let svbbox = svg.node().getBoundingClientRect();
     ts_y = d3.scaleLinear().rangeRound([svbbox.height - 10, 0]);
