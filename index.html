@@ -1,7 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-105697527-3"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'UA-105697527-3');
+    </script>
+
     <meta charset="UTF-8">
     <title>DRLViz</title>
 
@@ -675,7 +689,7 @@
     d3.json("data.json")
         .on("progress", function (evt) {
             console.log(evt);
-            var percentComplete = evt.loaded / (evt.lengthComputable?evt.total:27924281);
+            var percentComplete = evt.loaded / (evt.lengthComputable ? evt.total : 27924281);
 
             $('.progress').css({
                 width: percentComplete * 100 + '%'
