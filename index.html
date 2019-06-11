@@ -675,7 +675,7 @@
     d3.json("data.json")
         .on("progress", function (evt) {
             console.log(evt);
-            var percentComplete = evt.loaded / evt.total;
+            var percentComplete = evt.loaded / (evt.lengthComputable?evt.total:2792481);
 
             $('.progress').css({
                 width: percentComplete * 100 + '%'
