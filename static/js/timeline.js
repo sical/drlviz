@@ -15,7 +15,7 @@ let abstr3 = {
         "Poison": [],
         "Or_to_next": [],
         "variation": [],
-        "Dir_to_next": [],
+        // "Dir_to_next": [],
         "Ambiguous": []
     }
 ;
@@ -32,13 +32,14 @@ let abstr3 = {
 ];*/
 
 
-let svgbound = [109 + 12, 748];
+let svgbound = [109 + 12, 748 + 3];
 let sswidth;
 let padding = 30;
 let rowh = 20;
+let label_pad = 110
 
 function timeline_init(data, twidth) {
-    svgbound = [109 + 12, twidth  + 110];
+    svgbound = [label_pad + 11, twidth + label_pad + 5];
 
     let svg = d3.select('#timelien');
     svg_timelien = d3.select('#timelien');
@@ -54,18 +55,18 @@ function timeline_init(data, twidth) {
     let keys = Object.keys(abstr3);
     svg.append('line')
         .style('stroke-width', '1px')
-        .attr('x1', 110)
-        .attr('x2', 110)
+        .attr('x1', label_pad)
+        .attr('x2', label_pad)
         .attr('y1', 0)
-        .attr('y2', 600);
+        .attr('y2', 580);
 
     let event = timeline_make_event(data.health, data.positions);
     //.attr('stroke-dasharray', '5,5');
     timeline_draw_line(data.health, svg, padding - rowh / 2 - 2, '#FDB462', [0, 100], keys[0]);
     timeline_draw_events(event, svg, 2 * padding - rowh / 2 - 2, '#000', keys[1]);
-    if (scenario === 'health_gathering_supreme') {
+    if (scenario === 'health_gathering_supreme') {                                                //500
         timeline_item(data.fov, data.positions, svg, 'CustomMedikit', 3 * padding - rowh / 2 - 2, '#a1de52', 500, keys[2]);
-        timeline_item(data.fov, data.positions, svg, "Poison", 4 * padding - rowh / 2 - 2, '#fb7258', 175, keys[3]);
+        timeline_item(data.fov, data.positions, svg, "Poison", 4 * padding - rowh / 2 - 2, '#fb7258', 375, keys[3]);
     } else if (scenario === 'my_way_home') {
 
         timeline_item(data.fov, data.positions, svg, 'GreenArmor', 3 * padding - rowh / 2 - 2, '#a1de52', 500, keys[2]);
@@ -74,8 +75,8 @@ function timeline_init(data, twidth) {
 
     timeline_or2next(data.fov, data.positions, event[0].slice(), svg, '#FDB462', [0, 640], 5 * padding - rowh / 2 - 2, keys[4]);
     timeline_variation(data.orientations, svg, 6 * padding - rowh / 2 - 2, '#FDB462', keys[5]);
-    timeline_dir2next(data.fov, data.positions, event[0].slice(), svg, '#FDB462', 7 * padding - rowh / 2 - 2, keys[6]);
-    timeline_actionVari(data.probabilities, svg, 8 * padding - rowh / 2 - 2, '#FDB462', keys[7])
+    // timeline_dir2next(data.fov, data.positions, event[0].slice(), svg, '#FDB462', 7 * padding - rowh / 2 - 2, keys[6]);
+    timeline_actionVari(data.probabilities, svg, 7 * padding - rowh / 2 - 2, '#FDB462', keys[7])
 }
 
 function timeline_setRows(svg) {
@@ -246,10 +247,12 @@ function timeline_item(data, posis, svg, name, y, color, threshold, key) {
 
 
     if (sq.length === 1) {
+        console.log('LAAAAAAAAAAAAAAAAAAA');
         sq.push(data.length - 1);
         sqs.push(sq.slice());
         sq = []
     }
+
 
     for (let i = 0; i < sqs.length; i++) {
         svg.append('rect')
@@ -629,7 +632,7 @@ function get_item_uptime2(data, lb, ub) {
 
 function appendRule(svg, rule, nb, activs, id) {
 
-    nb += Object.keys(abstr3).length + 1;
+    nb += Object.keys(abstr3).length;
 
     draw_rule_activation(svg, nb * padding - rowh / 2 - 2, activs, rule.color, id);
 
@@ -653,6 +656,7 @@ function appendRule(svg, rule, nb, activs, id) {
 
 function draw_rule_activation(svg, y, activs, color, id) {
 
+    console.log(activs);
 
     let scx = d3.scaleLinear().domain([0, megadata[episode].health.length - 1]).range([svgbound[0], svgbound[1]]);
 

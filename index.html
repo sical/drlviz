@@ -139,14 +139,18 @@
     let col_size = 30;
     let mod = true;
     let sorttopactiv = false;
+    let last_circle;
     let hiddencrops = [[], [], []];
     let compact = false;
     let sortype = "0";
     let ratio;
-    let last_circle;
     let svg_traj, svg_tsne, svg_col1, svg_timelien, canvas_matrix, context_matrix;
     let sel = {'delsel': []};
     let selnb = 0;
+    let tempar = [[], [12, 381, 500, 496, 485], [421, 161, 168, 31], [108, 266, 332], [220], [], []];
+    let tempna = ['HP in FoV', 'Directions', 'No HP', 'Health', 'Misc'];
+
+    let antarger = 1;
 
 
     let cropped = {'ruleid': '', 'sel': [], 'avgs': []};
@@ -249,7 +253,7 @@
 
     function sqs2rule(svg, nb, activs, name, id) {
 
-        nb += Object.keys(abstr3).length - 1;
+        nb += Object.keys(abstr3).length - 2;
 
         draw_rule_activation(svg, nb * padding - rowh / 2 - 2, activs, 'steelblue', id);
 
@@ -551,53 +555,72 @@
     onkeydown = function (e) {
         e = e || event;
         keymap[e.keyCode] = e.type === 'keydown';
+        if (!edit) {
+            if (keymap[16]) { // arrowRight
+                if (keymap[39]) {
+                    e.preventDefault();
 
-        if (keymap[16]) { // arrowRight
-            if (keymap[39]) {
-                e.preventDefault();
+                    fastf();
 
-                fastf();
-
+                }
+                if (keymap[37]) {
+                    e.preventDefault();
+                    fastb();
+                }
             }
-            if (keymap[37]) {
+            else if (keymap[39]) { // arrowRight
+                if (keymap[16]) {
+                    e.preventDefault();
+
+                    fastf();
+                } else {
+                    e.preventDefault();
+
+                    forward()
+                }
+            }
+            else if (keymap[37]) { //arrow left
+                if (keymap[16]) {
+                    e.preventDefault();
+
+                    fastb();
+                } else {
+                    e.preventDefault();
+
+                    backward()
+                }
+            }
+
+            else if (keymap[32]) { // space
                 e.preventDefault();
-                fastb();
+
+                switchauto();
+            }
+            else if (keymap[67]) { // c
+                hcrop()
             }
         }
-        else if (keymap[39]) { // arrowRight
-            if (keymap[16]) {
-                e.preventDefault();
 
-                fastf();
-            } else {
-                e.preventDefault();
+        else {
+            if (keymap[13]) {
+                let bbox = $('#chann');
+                let col = bbox.attr('nb');
+                tempna[col] = bbox.val();
 
-                forward()
+                bbox.css('display', 'none');
+
+                d3.selectAll('.annheader[nb="' + col + '"]').text(bbox.val())
+
+                edit = false;
             }
-        }
-        else if (keymap[37]) { //arrow left
-            if (keymap[16]) {
-                e.preventDefault();
 
-                fastb();
-            } else {
-                e.preventDefault();
+            else if (keymap[27]) {
+                let bbox = $('#chann');
 
-                backward()
+
+                bbox.css('display', 'none');
+                edit = false;
             }
-        }
-
-        else if (keymap[32]) { // space
-            e.preventDefault();
-
-            switchauto();
-        }
-        else if (keymap[67]) { // c
-            hcrop()
-        }
-        else if (keymap[187] || keymap[107]) { // +
-
-            $('.plusep').trigger('click')
         }
     }
     ;
@@ -623,66 +646,6 @@
             sp.addClass('fa-play')
         }
 
-    }
-
-    function switchscen() {
-        if (scenario === 'health_gathering_supreme') {
-
-            $.ajax({
-                type: "GET",
-                url: "/change_scenario/my_way_home",
-                processData: false,
-                contentType: false,
-                success: function (d) {
-                    document.location.reload(true);
-                }
-            })
-        } else {
-
-
-            $.ajax({
-                type: "GET",
-                url: "/change_scenario/health_gathering_supreme",
-                processData: false,
-                contentType: false,
-                success: function (d) {
-                    document.location.reload(true);
-                }
-            })
-        }
-    }
-
-    function bookmark(step) {
-
-        let context = context_matrix
-        let scx = d3.scaleLinear().domain([0, megadata[episode].health.length - 1]).range([0, 748.125]);
-
-        test = !test;
-
-
-        if (!book.includes(step)) {
-
-            if (test) {
-                context.beginPath();
-                context.strokeStyle = '#3e6fbf';
-                context.lineWidth = 1;
-                context.moveTo(scx(step), 30);
-                context.lineTo(scx(step), memst);
-                context.stroke();
-                context.drawImage($('.display-img')[0], scx(step) - (95 / 2), 2, 95, 75);
-                context.closePath();
-            } else {
-
-                context.beginPath();
-                context.strokeStyle = '#3e6fbf';
-                context.lineWidth = 1;
-                context.moveTo(scx(step), 35);
-                context.lineTo(scx(step), memst);
-                context.stroke();
-                context.drawImage($('.display-img')[0], scx(step) - (95 / 2), 35, 95, 75);
-                context.closePath();
-            }
-        }
     }
 
 
@@ -807,6 +770,9 @@
                     .on('brush', ve_brushmove)
                     .on('end', ve_brushend)
                 );
+
+            intit_annot(d3.select('#annotate'))
+
         });
 
 
@@ -979,6 +945,8 @@
         let scx = d3.scaleLinear().domain([0, megadata[episode].health.length - 1]).range([0, 748.125]);
 
         let svg = svg_col1;
+
+        doTicks();
 
 
         svg.append("g")
@@ -1793,18 +1761,10 @@
 
     }
 
-    bod.on('input', '#salcon', function () {
+    bod.on('click', '#salcon', function () {
 
-        let inival = parseInt($(this).val()) / 100;
-        opval = 1 - inival;
-
+        opval = (opval === 0.5 ? 1 : 0.5);
         $('.display-img').css('opacity', opval);
-        $(this).css('background-image',
-            '-webkit-gradient(linear, left top, right top, '
-            + 'color-stop(' + inival + ', #233E34), '
-            + 'color-stop(' + inival + ', #C5C5C5)'
-            + ')'
-        );
 
     });
 
@@ -1950,82 +1910,6 @@
             .text(controlVal);
     });
 
-
-    function sel2mask(data) {
-
-
-        console.log(data);
-
-        $('#epilist').append('<div style="opacity:0.5;background-color: steelblue;" class="epbox" id="boxepgen' + nb_gen + '"><img id="loadindep" src="static/assets/loading.gif"></div>');
-        let res = [];
-        for (let i = 0; i < megadata[episode].hiddens[0].length; i++) {
-
-            if (data.includes(i)) {
-                res.push(1)
-            } else {
-                res.push(0.02)
-            }
-
-        }
-
-        let form = new FormData();
-
-        form.append('mask', res);
-
-        $.ajax({
-            type: "POST",
-            url: "/gen_epz",
-            processData: false,
-            contentType: false,
-            data: form,
-            success: function (d) {
-                let id = 'episode' + 'gen' + nb_gen;
-                nb_gen++;
-                megadata[id] = tofloat($.parseJSON(d));
-                $('#loadindep').replaceWith('<p> Gen </p>');
-                update_traj(megadata[id].positions, svg_traj, id)
-            }
-        });
-    }
-
-    function reverse_sel2mask(data) {
-
-
-        console.log(data);
-
-        $('#epilist').append('<div style="opacity:0.5;background-color: steelblue;" class="epbox" id="boxepgen' + nb_gen + '"><img id="loadindep" src="static/assets/loading.gif"></div>');
-        let res = [];
-        for (let i = 0; i < megadata[episode].hiddens[0].length; i++) {
-
-            if (!data.includes(i)) {
-                res.push(1)
-            } else {
-                res.push(0.02)
-            }
-
-        }
-
-        let form = new FormData();
-
-        form.append('mask', res);
-
-        $.ajax({
-            type: "POST",
-            url: "/gen_epz",
-            processData: false,
-            contentType: false,
-            data: form,
-            success: function (d) {
-                let id = 'episode' + 'gen' + nb_gen;
-                nb_gen++;
-                megadata[id] = tofloat($.parseJSON(d));
-                $('#loadindep').replaceWith('<p> Gen </p>');
-                update_traj(megadata[id].positions, svg_traj, id)
-            }
-        });
-    }
-
-
     bod.on('click', '.selbox', function (e) {
 
         if (e.target.className !== 'selld')
@@ -2058,24 +1942,6 @@
 
     }
 
-
-    bod.on('click', '.plussel', function () {
-
-
-        $(this).parent().parent().prepend(" " +
-            "<div id=\"sel" + selnb + "\" class=\"selbox\">\n" +
-            "\n" +
-            "   <h3>Save" + selnb + "</h3>\n" +
-            "   <div>\n" +
-            "       <button class='seldel'> Delete</button>\n" +
-            "       <button class='selld'> See</button>\n" +
-            "   </div>\n" +
-            " </div>");
-
-        selnb++;
-    });
-
-
     bod.on('click', '.seldel', function (e) {
         let source = $(this).parent().parent().attr('id');
 
@@ -2099,7 +1965,7 @@
             return old_res.indexOf(d)
         });
 
-        $('#hiddensl').html(temp.length)
+        $('#hiddensl').html(temp.length);
 
         mega_draw_matrix(megadata[episode].hiddens, context_matrix, col, can_pad, memst, hiddencrops[1], temp, hiddencrops[0]);
     });
@@ -2108,6 +1974,237 @@
     function updatenbh() {
 
         $('#hiddensl').html(hiddencrops[2].length)
+    }
+
+    function intit_annot(svg) {
+
+
+        let angle = 30;
+
+
+        svg.append("line")
+            .attr("x1", 0)
+            .attr("y1", 100)
+            .attr("x2", (6 * 40) - 40)
+            .attr("y2", 100)
+            .style("stroke-width", '0.5')
+            .attr("stroke", "black");
+
+
+        for (let i = 0; i < 6; i++) {
+
+            let g = svg.append('g').attr('id', 'gr' + i);
+
+            g.append('rect')
+                .attr("x", i * 40)
+                .attr("y", 100)
+                .attr("width", 40)
+                .attr("height", ve_h * megadata[episode].hiddens[0].length + 80)
+                .style("stroke-width", '1')
+                .style("stroke", "rgb(166, 166, 166)")
+                .style('fill', 'none')
+                .attr('class', (i !== 1 ? 'annelbg ' : 'annelbg selcol'))
+                .attr('nb', i + 1)
+                .on('click', colclick);
+
+
+            g.append("line")
+                .attr("x1", i * 40)
+                .attr("y1", 100)
+                .attr("x2", i * 40 + angle)
+                .attr("y2", 5)
+                .style("stroke-width", '1.5')
+                .style("stroke", "rgb(166, 166, 166)");
+
+            if (i > 0) {
+                g.append('text')
+                    .text(tempna[i - 1])
+                    .attr('font-family', 'Helvetica')
+                    .attr('font-size', '14pt')
+                    .attr('text-anchor', 'start')
+                    .attr('transform', 'translate(' + (i) * 36 + ',100)rotate(-72)')
+                    .attr('class', 'annheader')
+                    .attr('nb', i)
+
+            }
+
+            updateAnn(i)
+
+        }
+        svg.append('text')
+            .text('Total')
+            .attr('font-family', 'Helvetica')
+            .attr('font-size', '14pt')
+            .attr('text-anchor', 'start')
+            .attr('transform', 'translate(' + (6) * 36 + ',100)rotate(-72)')
+            .attr('class', 'annheader')
+            .attr('nb', 6)
+
+    }
+
+
+    function colclick() {
+        let cla = $(this).attr('class');
+        antarger = $(this).attr('nb');
+
+        let cla2 = $('.selcol').attr('class');
+
+        if (cla !== cla2) {
+
+            if (cla2 !== undefined) {
+                cla2 = cla2.replace('selcol', '');
+                $('.selcol').attr('class', cla2);
+            }
+            cla += ' selcol';
+
+
+            $(this).attr('class', cla);
+        }
+
+    }
+
+    bod.on('click', '.annheader', function () {
+
+        let bbox = $('#chann');
+
+        edit = true;
+
+        let col = $(this).attr('nb');
+
+        bbox.css('display', 'block');
+
+        bbox.val(tempna[parseInt(col)-1]);
+
+        bbox.attr('nb', col)
+    });
+
+
+    function addinAnn(col, elems) {
+
+
+        tempar[col] = tempar[col].concat(elems).unique();
+
+        updateAnn(col)
+
+    }
+
+
+    function updateAnn(col) {
+
+        let st = 138;
+
+        let g = d3.select('#gr' + col);
+
+        g.selectAll('.aelem').remove();
+
+        for (let i = 0; i < tempar[col].length; i++) {
+
+            addElem(g, tempar[col][i], st, col)
+
+        }
+        updateTotal()
+
+    }
+
+    function addElem(g, id, st, col) {
+
+
+        d3.select('#gr' + col).append('rect')
+            .attr('x', (((col - 1) * 40) + 3) + 'px')
+            .attr('y', (st + (id * ve_h)) + 'px')
+            .attr('width', '34px')
+            .attr('height', (ve_h + 0.1) + 'px')
+            .style('fill', 'rgb(120, 120, 120)')
+            .attr('class', 'aelem')
+    }
+
+
+    function updateTotal() {
+
+
+        let svg = d3.select('#annotate');
+
+        svg.selectAll('.totelem').remove();
+        tempar[6] = [];
+        let tot = tempar.flat().unique();
+        let st = 158;
+
+
+        tempar[6] = tot;
+
+        for (let i = 0; i < tot.length; i++) {
+
+
+            svg.append('rect')
+
+                .attr('x', ((5 * 40) + 3) + 'px')
+                .attr('y', (st + (tot[i] * ve_h)) + 'px')
+                .attr('width', '34px')
+                .attr('height', (ve_h + 0.1) + 'px')
+                .style('fill', 'rgb(120, 120, 120)')
+                .attr('class', 'totelem')
+        }
+    }
+
+
+    function doTicks() {
+
+        $('.tick').remove();
+
+        let scx = d3.scaleLinear().domain([0, megadata[episode].health.length - 1]).range([0, twidth - 6]);
+
+        let svg = d3.select('#col1svg');
+
+        for (let i = 0; i < megadata[episode].health.length / 50; i++) {
+            svg.append('rect')
+                .attr('x', (scx(50 * i) + can_pad) + 'px')
+                .attr('y', (5) + 'px')
+                .attr('width', '2px')
+                .attr('height', (15) + 'px')
+                .style('fill', 'rgb(120, 120, 120)')
+                .attr('class', 'tick');
+
+            if (megadata[episode].health.length - (i * 50) > 10) {
+                svg.append('text')
+                    .attr('x', (scx(50 * i) + can_pad - (50 * i < 100 ? 7 : 15)) + 'px')
+                    .attr('y', (35) + 'px')
+                    .style('color', 'rgb(120, 120, 120)')
+                    .attr('class', 'tick')
+                    .style('font-size', '12pt')
+                    .text(50 * i)
+
+            }
+        }
+
+        svg.append('rect')
+            .attr('x', (scx(megadata[episode].health.length - 1) + can_pad) + 'px')
+            .attr('y', (5) + 'px')
+            .attr('width', '2px')
+            .attr('height', (15) + 'px')
+            .style('fill', 'rgb(120, 120, 120)')
+            .attr('class', 'tick');
+
+        svg.append('text')
+            .attr('x', (scx(megadata[episode].health.length - 1) + can_pad - 15) + 'px')
+            .attr('y', (35) + 'px')
+            .style('color', 'rgb(120, 120, 120)')
+            .attr('class', 'tick')
+            .style('font-size', '12pt')
+            .text((megadata[episode].health.length - 1));
+
+
+        for (let i = 0; i < megadata[episode].health.length / 10; i++) {
+
+            if ((10 * i % 50) !== 0)
+                svg.append('rect')
+                    .attr('x', (scx(10 * i) + can_pad) + 'px')
+                    .attr('y', (5) + 'px')
+                    .attr('width', '1px')
+                    .attr('height', (10) + 'px')
+                    .style('fill', 'rgb(160, 160, 160)')
+                    .attr('class', 'tick')
+        }
+
     }
 
 </script>
@@ -2134,7 +2231,45 @@
 
 
             </div>
-            <div style="margin-top: 10px"><i class="fa fa-adjust fa-lg"></i> <input id="salcon" type="range" min="0" max="100" style=" outline: none;width: 80%" step="5" value="0"/> <i class="fa fa-moon fa-lg"></i></div>
+            <div style="margin-top: 10px">
+
+                <div style="vertical-align: text-top;display: inline-block;color: #fff;z-index: 888;min-width: 5%;text-align: center;margin:5px" id="buttons">
+                    <div>
+                        <button type="button" id="thong" class="btn btn-default btn-lg" onclick="backward()" style="padding: 2px;font-size:0.75rem;width: 30px" aria-label="Left Align">
+                            <span class="fa fa-arrow-left fa-lg" aria-hidden="true"></span>
+                        </button>
+                        <button type="button" id="auto" class="btn btn-default btn-lg" onclick="switchauto()" style="padding: 2px;font-size:0.75rem;width: 30px" aria-label="Left Align">
+                            <span class="fa fa-play fa-lg" aria-hidden="true"></span>
+                        </button>
+                        <button type="button" id="thing" class="btn btn-default btn-lg" onclick="forward()" style="padding: 2px;font-size:0.75rem;width: 30px" aria-label="Left Align">
+                            <span class="fa fa-arrow-right fa-lg" aria-hidden="true"></span>
+                        </button>
+
+                        <button type="button" id="res" class="btn btn-default btn-lg" onclick="reset()" style="padding: 2px;font-size:0.75rem;width: 30px" aria-label="Left Align">
+                            <span class="fa fa-repeat fa-lg" aria-hidden="true"></span>
+                        </button>
+
+                        <button type="button" id="compact" class="btn btn-default btn-lg" onclick="hcrop()" style="padding: 2px;font-size:0.75rem;width: 30px" aria-label="Left Align">
+                            <span class="fa fa-compress fa-lg" aria-hidden="true"></span>
+                        </button>
+                        <button type="button" id="salcon" class="btn btn-default btn-lg" style="padding: 2px;font-size:0.75rem;width: 30px" aria-label="Left Align">
+                            <i class="fa fa-adjust fa-lg"></i>
+                        </button>
+
+                        <select id="sort-sel" class="btn" style="padding: 1px">
+                            <option value="0">No sort</option>
+                            <option value="1">Activation</option>
+                            <option value="2">Change</option>
+                            <option value="3">Stable</option>
+                            <option value="4">Similar</option>
+                            <option value="5">Projection</option>
+                            <option value="6">Projection Abs</option>
+                        </select>
+                    </div>
+                </div>
+
+
+            </div>
         </div>
         <div style="grid-row: 2;text-align: center;height: 30%;">
             <svg id="trajs" width="60%" height="90%" style="padding: 5px;">
@@ -2145,6 +2280,7 @@
             <svg id="tsne" width="90%" height="80%" style="padding: 5px;">
 
             </svg>
+
         </div>
 
         <div style="grid-row: 4;height: 10%;margin-top: 2%">
@@ -2153,58 +2289,29 @@
 
                 </div>
                 <div>
-                    <img class="plusep" style="height: 25px;width: auto;border: black 2px solid;padding: 2px;position: absolute;right: 5%;top:40%" src="static/assets/001-plus-1.png">
+                    <!--<img class="plusep" style="height: 25px;width: auto;border: black 2px solid;padding: 2px;position: absolute;right: 5%;top:40%" src="/static/assets/001-plus-1.png">-->
                 </div>
             </div>
-
         </div>
     </div>
 
 
     <div id='nb1' style="grid-column: 2;min-width: 720px;overflow-y: hidden">
         <div style="height: 26px;width: 100%">
-            <div style="vertical-align: text-top;display: inline-block;color: #fff;z-index: 888;min-width: 5%;text-align: center;margin:5px" id="buttons">
-                <div>
-                    <button type="button" id="thong" class="btn btn-default btn-lg" onclick="backward()" style="padding: 2px;font-size:0.75rem;width: 30px" aria-label="Left Align">
-                        <span class="fa fa-arrow-left fa-lg" aria-hidden="true"></span>
-                    </button>
-                    <button type="button" id="auto" class="btn btn-default btn-lg" onclick="switchauto()" style="padding: 2px;font-size:0.75rem;width: 30px" aria-label="Left Align">
-                        <span class="fa fa-play fa-lg" aria-hidden="true"></span>
-                    </button>
-                    <button type="button" id="thing" class="btn btn-default btn-lg" onclick="forward()" style="padding: 2px;font-size:0.75rem;width: 30px" aria-label="Left Align">
-                        <span class="fa fa-arrow-right fa-lg" aria-hidden="true"></span>
-                    </button>
 
-                    <button type="button" id="res" class="btn btn-default btn-lg" onclick="reset()" style="padding: 2px;font-size:0.75rem;width: 30px" aria-label="Left Align">
-                        <span class="fa fa-repeat fa-lg" aria-hidden="true"></span>
-                    </button>
-
-                    <button type="button" id="compact" class="btn btn-default btn-lg" onclick="hcrop()" style="padding: 2px;font-size:0.75rem;width: 30px" aria-label="Left Align">
-                        <span class="fa fa-compress fa-lg" aria-hidden="true"></span>
-                    </button>
-
-                    <select id="sort-sel">
-                        <option value="0">No sort</option>
-                        <option value="1">Activation</option>
-                        <option value="2">Change</option>
-                        <option value="3">Stable</option>
-                        <option value="4">Similar</option>
-                        <option value="5">Projection</option>
-                        <option value="6">Projection Abs</option>
-                    </select>
-                </div>
-            </div>
             <button onclick="saveHandle()" type="button" class="btn btn-default btn-lg" style="float: right;margin-right: 10px;margin-top: 5px">Save</button>
 
 
             <div style="width: 80%;margin-top: 2%;display: inline-block;position: relative;margin-left:105px" id="timeline">
+
                 <output id="tooltip1" name="rangeVal">50</output>
+                <h3 style="position: relative;top:-45px;left:48%;width: 70px">Steps</h3>
             </div>
         </div>
         <div style="min-height: 700px;min-width: 600px">
 
 
-            <svg class="evsvg" style="margin-top: 50px" id="col1svg">
+            <svg class="evsvg" style="margin-top: 17px" id="col1svg">
 
             </svg>
 
@@ -2212,12 +2319,12 @@
             <canvas height="2850" width="24948" id="matrix-canvas" style="margin-left: 110px"></canvas>
 
 
-            <div style="float: right;margin-top: 4.8%;">
-                <p id="hiddensl">
+            <div style="float: right;margin-top: 54px;text-align: center">
+                <p id="hiddensl" style="width: 78%">
                     512
                 </p>
 
-                <svg width="80" height="480" style=" border-left: solid #333333 1px; " id="currhidd">
+                <svg width="95" height="480" style="" id="currhidd">
 
                 </svg>
             </div>
@@ -2232,22 +2339,11 @@
     </div>
 
     <div style="grid-column: 3;text-align: center;position: relative">
-        <div id="sellist" style="padding-top: 20px;text-align: center">
-
-            <div id="delsel" class="selbox">
-
-                <h3>Default</h3>
-                <div>
-                    <button class="selld"> See</button>
-                </div>
-            </div>
-
-            <div>
-                <img class="plussel" style="height: 25px;width: auto;border: black 2px solid;padding: 2px;position: absolute;right: 45%;margin-top: 10px" src="static/assets/001-plus-1.png">
-            </div>
+        <svg id="annotate" style="width: 90%;height: 80%;margin-top: 2px">
 
 
-        </div>
+        </svg>
+
 
     </div>
 
@@ -2255,5 +2351,10 @@
 </div>
 
 
+<script>
+
+
+</script>
+<input id="chann" type="text" maxlength="18" minlength="2" style="position: absolute;padding: 5px;right: 40px;top: 40px;display: none">
 </body>
 </html>

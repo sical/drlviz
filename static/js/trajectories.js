@@ -234,7 +234,7 @@ async function selTsne(data, ts_type) {
 
 function makeState(svg, data) {
 
-    myWorker.terminate();
+   myWorker.terminate();
     myWorker = new Worker("static/js/worker.js");
 
     let svbbox = svg.node().getBoundingClientRect();
@@ -243,7 +243,7 @@ function makeState(svg, data) {
 
     svg.selectAll('g').transition().delay(300).remove();
     let g1 = svg.append('g');
-    let first = true;
+
 
     initdrawCircles(g1, data.length, 'steelblue', svg);//, 'click', switchst);
 
@@ -440,5 +440,6 @@ function updateDomain(data) {
         return d[1];
     }) + 2]);
 }
+
 
 
