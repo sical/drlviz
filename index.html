@@ -71,6 +71,45 @@
         #up-main g.row:hover {
             opacity: 0.8;
         }
+
+        .annelbg:hover {
+            opacity: 0.8;
+            fill: rgb(254, 234, 169) !important;
+
+        }
+
+        #annotate g {
+            pointer-events: none;
+        }
+
+        #annotate rect, .annheader {
+            pointer-events: all;
+            cursor: pointer;
+        }
+
+        .selcol {
+            opacity: 1 !important;
+            fill: rgb(238, 216, 129) !important;
+        }
+
+        .sliderticks {
+            display: flex;
+            justify-content: space-between;
+            padding: 0 10px;
+        }
+
+        .sliderticks p {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            text-align: center;
+            width: 1px;
+            background: #D3D3D3;
+            height: 10px;
+            line-height: 40px;
+            margin: 0 0 20px 0;
+        }
+
     </style>
 
     <script src="static/js/jquery.min.js"></script>
@@ -714,9 +753,9 @@
             init_svg(can_pad, 5, $('#col1svg').height());
 
 
-            svg_col1.call(zoomer)
-                .on("wheel.zoom", null) // disables default zoom wheel behavior
-                .on("wheel", pan);
+            // svg_col1.call(zoomer)
+            //     .on("wheel.zoom", null) // disables default zoom wheel behavior
+            //     .on("wheel", pan);
 
 
             // d3.select('#seq-canvas').node().getContext('2d').scale(3, 3);
@@ -766,7 +805,7 @@
 
             d3.select('#currhidd').append("g")
                 .attr("class", "brush")
-                .call(d3.brushY().extent([[20, 0], [45, rest]])
+                     .call(d3.brushY().extent([[45, 10], [70, rest + 10]])
                     .on('brush', ve_brushmove)
                     .on('end', ve_brushend)
                 );
@@ -2073,7 +2112,7 @@
 
         bbox.css('display', 'block');
 
-        bbox.val(tempna[parseInt(col)-1]);
+        bbox.val(tempna[parseInt(col) - 1]);
 
         bbox.attr('nb', col)
     });
