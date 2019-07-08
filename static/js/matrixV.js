@@ -26,28 +26,35 @@ function ve_init_rows(svg, data, height) {
         });
 
     svg.append('line')
+        .attr('class', 'hiddensli')
         .attr('x1', 45 + ve_w)
         .attr('x2', 45 + ve_w)
         .attr('y1', 10)
         .attr('y2', (ve_h * data.length) + 10);
 
     svg.append('line')
+        .attr('class', 'hiddensli')
+
         .attr('x1', 45)
         .attr('x2', 45)
         .attr('y1', 10)
         .attr('y2', (ve_h * data.length) + 10);
 
     svg.append('line')
+        .attr('class', 'hiddensli')
+
         .attr('x1', 45 + ve_w)
         .attr('x2', 45)
         .attr('y1', 10)
         .attr('y2', 10);
 
     svg.append('line')
+        .attr('class', 'hiddensli')
+
         .attr('x1', 45 + ve_w)
         .attr('x2', 45)
         .attr('y1', (ve_h * data.length) + 10)
-        .attr('y2', (ve_h * data.length+1) + 10);
+        .attr('y2', (ve_h * data.length + 1) + 10);
 
     ve_rows = svg.selectAll('rect');
     ve_ticks(data.length, svg)
@@ -57,6 +64,7 @@ function ve_init_rows(svg, data, height) {
 
 function ve_ticks(nb, svg) {
     $('.vetick').remove();
+    $('.labl').remove();
 
     for (let i = 0; i < nb / 50; i++) {
         svg.append('rect')
@@ -68,6 +76,7 @@ function ve_ticks(nb, svg) {
             .attr('class', 'vetick');
 
         svg.append('text')
+            .attr('font-family', 'Helvetica')
             .attr('x', (0) + 'px')
             .attr('y', (ve_h * (50 * i) + 16) + 'px')
             .style('color', 'rgb(120, 120, 120)')
@@ -88,8 +97,8 @@ function ve_ticks(nb, svg) {
     }
 
     svg.append('text')
-        .text('Elements')
         .attr('font-family', 'Helvetica')
+        .text('Elements')
         .attr('font-size', '18px')
         .attr('font-weight', '700')
         .attr('text-anchor', 'start')
@@ -104,6 +113,58 @@ function ve_update(svg, data) {
         .attr('fill', (d, i) => {
             return col(data[i])
         })
+}
+
+
+function ve_resize(svg, height) {
+
+    svg.selectAll('.hiddensli').remove();
+
+
+    let ma = megadata[episode].hiddens[0].length
+
+    ve_h = Math.min(((height) / ma), 60);
+
+
+    svg.append('line')
+        .attr('class', 'hiddensli')
+        .attr('x1', 45 + ve_w)
+        .attr('x2', 45 + ve_w)
+        .attr('y1', 10)
+        .attr('y2', (ve_h * ma) + 10);
+
+    svg.append('line')
+        .attr('class', 'hiddensli')
+
+        .attr('x1', 45)
+        .attr('x2', 45)
+        .attr('y1', 10)
+        .attr('y2', (ve_h * ma) + 10);
+
+    svg.append('line')
+        .attr('class', 'hiddensli')
+
+        .attr('x1', 45 + ve_w)
+        .attr('x2', 45)
+        .attr('y1', 10)
+        .attr('y2', 10);
+
+    svg.append('line')
+        .attr('class', 'hiddensli')
+
+        .attr('x1', 45 + ve_w)
+        .attr('x2', 45)
+        .attr('y1', (ve_h * ma) + 10)
+        .attr('y2', (ve_h * ma + 1) + 10);
+
+    svg.selectAll('.hiddensgrp rect')
+        .attr('y', (d, i) => {
+            return (i * ve_h) + 10
+        })
+        .attr('height', ve_h)
+
+    ve_ticks(ma, svg)
+
 }
 
 

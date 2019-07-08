@@ -63,6 +63,7 @@ h3, img, i, p, button, span, h2, div, text {
     justify-items: stretch;
     align-items: stretch;
     height: calc(100vh - 16px);
+    width: 100%;
 
 }
 
@@ -457,24 +458,161 @@ output {
 
 }
 
-/*
-#buttons .btn {
-    background-color: #4495b4; !* Green *!
-    border: 1px solid green;
-    color: white;
-    padding: 15px 32px;
-    text-align: center;
-    text-decoration: none;
-    display: inline-block;
-    font-size: 16px;
+#sort-sel option {
+
+    font-weight: 600;
+}
+
+.btn {
+    font-size: 0.75rem;
+    width: 30px;
+    margin: 25px auto;
+    padding: 5px;
+
+    overflow: hidden;
+
+    border-radius: 2px;
+
+    border-width: 0;
+    outline: none;
+    /*border-radius: 2px;*/
+    box-shadow: 0 1px 4px rgba(0, 0, 0, .6);
+
+    background-color: #233E34;
+    color: #ecf0f1;
+
+    transition: background-color .3s;
+
     cursor: pointer;
-    float: left;
 }
 
-.btn-group .btn:not(:last-child) {
-    border-right: none; !* Prevent double borders *!
+/*
+
+.btn > * {
+  position: relative;
 }
 
-.btn-group .btn:hover {
-    background-color: #3e8e41;
-}*/
+.btn span {
+  display: block;
+  padding: 12px 24px;
+}
+*/
+
+.btn:before {
+    content: "";
+
+    /*position: absolute;*/
+    /*    top: 50%;
+        left: 50%;*/
+
+    /*display: block;*/
+    width: 0;
+    padding-top: 0;
+
+    border-radius: 100%;
+
+    background-color: rgba(236, 240, 241, .3);
+
+    -webkit-transform: translate(-50%, -50%);
+    -moz-transform: translate(-50%, -50%);
+    -ms-transform: translate(-50%, -50%);
+    -o-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+}
+
+.btn:active:before {
+    /*width: 120%;*/
+    /*padding-top: 120%;*/
+
+    transition: width .2s ease-out, padding-top .2s ease-out;
+}
+
+#tsne circle {
+    fill-opacity: 0.5;
+}
+
+.lasso path {
+    stroke: rgb(80, 80, 80);
+    stroke-width: 2px;
+}
+
+.lasso .drawn {
+    fill-opacity: .05;
+}
+
+.lasso .loop_close {
+    fill: none;
+    stroke-dasharray: 4, 4;
+}
+
+.lasso .origin {
+    fill: #3399FF;
+    fill-opacity: .5;
+}
+
+.not_possible {
+    fill: rgb(200, 200, 200);
+}
+
+.possible {
+    fill: #EC888C;
+}
+
+.selected {
+    fill: steelblue;
+}
+
+#trajs g .line {
+    opacity: 0.25;
+}
+
+.currentepisode {
+    opacity: 1 !important;
+    stroke-width: 2px;
+}
+
+#up-main g {
+    pointer-events: all;
+}
+
+#up-main g.row:hover {
+    opacity: 0.8;
+}
+
+.annelbg:hover {
+    opacity: 0.8;
+    fill: rgb(254, 234, 169) !important;
+
+}
+
+#annotate g {
+    pointer-events: none;
+}
+
+#annotate rect, .annheader {
+    pointer-events: all;
+    cursor: pointer;
+}
+
+.selcol {
+    opacity: 1 !important;
+    fill: rgb(238, 216, 129) !important;
+}
+
+.sliderticks {
+    display: flex;
+    justify-content: space-between;
+    padding: 0 10px;
+}
+
+.sliderticks p {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    text-align: center;
+    width: 1px;
+    background: #D3D3D3;
+    height: 10px;
+    line-height: 40px;
+    margin: 0 0 20px 0;
+}

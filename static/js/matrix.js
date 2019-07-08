@@ -1,72 +1,13 @@
-let elem_width = 1.1;
-let elem_height = 1.1;
 let cw = 1.432;
 let mem_height = 750;
 let gap = cw * 0.25;
-let sort_change = false;
 let old_sort = '-1';
 let old_res;
 
-function draw_matrix(data, context, colorScale, offx, offy, nb, rwidth) {
-
-    context.clearRect(0, offy, 99900, mem_height + 20);
-    let nsize = (mem_height / nb);
-
-    for (let i = 0; i < data.length; i++) {
-        for (let j = 0; j < nb; j++) {
-            canvas_draw(colorScale(data[i][j]), i, offy, context, cw, nsize, j)
-        }
-    }
-}
 
 function canvas_draw(color, offx, offy, context, telem_width, telem_height, ind) {
-    // let deye = fisheye({"x": (offx * elem_width), "y": offy * elem_height});
-
     context.fillStyle = color;
     context.fillRect(offx * (telem_width), (parseFloat(ind + 0.01) * parseFloat(telem_height)) + offy, telem_width, telem_height);
-
-
-    // context.rect(deye.x, deye.y, (deye.z * (elem_width + 0.05)), (deye.z * (elem_width + 0.05)));
-
-
-}
-
-
-function draw_sorted_matrix(data, context, colorScale, offx, offy, activ, nb) {
-    let nsize = (mem_height / nb);
-    context.clearRect(0, offy, 99900, mem_height + 20);
-    let order = temp_sortToinstBig(data, activ);
-    for (let i = 0; i < data.length; i++) {
-        for (let j = 0; j < nb; j++) {
-            canvas_draw(colorScale(data[i][order[j].ind]), i, offy, context, cw, nsize, j)
-        }
-    }
-}
-
-
-function temp_sortToinstBig(data, activ) {
-
-    let num = data[0].length;
-    let tempres = Array.apply(null, Array(num))
-        .map(function (d, i) {
-            return {diff: 0, ind: i}
-        });
-
-
-    for (let k = 0; k < activ.length; k++) {
-
-        for (let i = 0; i < activ[k][1] - activ[k][0]; i++) {
-            for (let j = 0; j < tempres.length; j++) {
-                tempres[j].diff += Math.abs(data[activ[k][0] + i][j])
-            }
-        }
-    }
-    tempres.sort(function (x, y) {
-        return d3.descending(x.diff, y.diff);
-    });
-
-    console.log(tempres);
-    return tempres;
 }
 
 
@@ -311,30 +252,9 @@ function make_link(context, p1, p2, p3, p4) {
     context.closePath();
 }
 
-
 function draw_cropped_matrix(data, context, colorScale, offx, offy, activ) {
 
-
     mega_draw_matrix(data, context, colorScale, offx, offy, activ, 0, [[60, 190]])
-
-
-    // console.log(hiddenHandler(data, activ, 0, [[30, 90]], false));
-    /*
-        context.clearRect(0, offy, 900, mem_height + 20);
-
-        let crop = croptry(data, activ);
-        cropped.sel = crop;
-
-        console.log(crop);
-
-
-        let size = Math.min((mem_height / crop.length), 25);
-
-        for (let i = 0; i < data.length; i++) {
-            for (let j = 0; j < crop.length; j++) {
-                canvas_draw(colorScale(data[i][crop[j]]).replace(')', ', ' + (inactiv(i, activ) ? '1' : '0.9') + ')').replace('rgb', 'rgba'), i, offy, context, cw, size, j)
-            }
-        }*/
 }
 
 function inactiv(ind, activ) {
@@ -342,35 +262,10 @@ function inactiv(ind, activ) {
     for (let i = 0; i < activ.length; i++) {
 
         if (ind > activ[i][0] && ind < activ[i][1]) {
-            return true
+            return true;
         }
     }
-
-    return false
-}
-
-function croptry(data, activ) {
-
-    let res = [];
-    cropped.avgs = [];
-
-    for (let i = 0; i < data[0].length; i++) {
-
-        let temp = get_elemAct(data, activ, i);
-
-        let tvari = vari(temp) * 100;
-        let actavg = average(temp);
-
-        if (tvari < 14 && (actavg < -0.1 || actavg > 0.1)) { // Change Tvari to control stability selector
-
-            let ntemp = checkline(data, activ.slice(), i);
-            if (Math.abs(average(ntemp) - actavg) > 0.25) { // Lower for less diff between activ and other.
-                res.push(i);
-                cropped.avgs.push(actavg)
-            }
-        }
-    }
-    return res;
+    return false;
 }
 
 
@@ -391,23 +286,6 @@ function checkline(data, activ, id) {
         }
     }
     return vect
-}
-
-
-function get_elemAct(data, activ, id) {
-    let res = [];
-
-    for (let i = 0; i < activ.length; i++) {
-        for (let j = activ[i][0]; j <= activ[i][1]; j++) {
-            res.push(data[j][id])
-        }
-    }
-
-    return res
-}
-
-function update_size(height, nb) {
-    elem_height = height / nb
 }
 
 
@@ -493,24 +371,17 @@ function hiddenHandler(data, vactivs, zoomnb, hactivs, top) {
     let rdata = data.slice();
 
     if (vactivs.length > 0) {
-
-        //   rdata = [];
-
-        let hid = croptry(data, vactivs);
-
-        zoomnb = hid;
+       let tdata = rdata.slice();
+           rdata = [];
 
 
-        console.log(hid);
-        /* for (let j = 0; j < data.length; j++) {
+         for (let j = 0; j < tdata.length; j++) {
              let tem = [];
-             for (let i = 0; i < hid.length; i++) {
-
-                 tem.push(data[j][hid[i]])
+             for (let i = 0; i < vactivs.length; i++) {
+                 tem.push(tdata[j][vactivs[i]])
              }
              rdata.push(tem.slice())
          }
- */
     }
 
     if (hactivs.length > 0) {

@@ -3,7 +3,8 @@ let traj_y;
 
 let ts_y;
 let ts_x;
-
+let Y;
+let last_circle;
 
 let objids = [];
 var opt = {};
@@ -35,10 +36,6 @@ function draw_traj(data, svg, width, height) {
     let mapx = (scenario === 'health_gathering_supreme' ? [0, 2000] : [200, 1200]);
     let mapy = (scenario === 'health_gathering_supreme' ? [0, 2000] : [-600, 100]);
 
-    // Health gatherin supreme
-    // traj_x = d3.scaleLinear().domain([0, 2000]).range([0, width]);
-    // traj_y = d3.scaleLinear().domain([0, 2000]).range([height, 0]);
-
     traj_x = d3.scaleLinear().range([0, width]);
     traj_y = d3.scaleLinear().range([height, 0]);
 
@@ -63,6 +60,9 @@ function draw_traj(data, svg, width, height) {
                 return mkeys[i];
             })
     }
+
+
+    draw_agent_path(svg, data[episode].positions[whichstep], data[episode].orientations[whichstep])
 }
 
 function update_traj(data, svg, id) {
@@ -95,21 +95,6 @@ function draw_agent(svg, pos) {
 }
 
 
-function draw_agent_or(svg, pos, or) {
-
-    d3.selectAll('.agent').remove();
-
-    svg.append("text")
-        .attr('class', 'agent')
-        .attr('text-anchor', 'middle')
-        .attr('dominant-baseline', 'text-before-edge')
-        .attr('transform', 'translate(' + (traj_x(pos[0]) - 20) + ',' + (traj_y(pos[1]) - 18) + ') rotate(' + (360 - or) + ' ' + (20) + ' ' + (18) + ')')
-        // .style('transform', 'rotate(' + (or - 90) + 'deg)')
-        .attr("font-family", "Verdana")
-        .attr("font-size", 30)
-        .html("&#11165;")
-}
-
 function draw_agent_path(svg, pos, or) {
 
     d3.selectAll('.agent').remove();
@@ -118,7 +103,6 @@ function draw_agent_path(svg, pos, or) {
         .attr('d', "M 15.8,8.3 0.8,15.8 5,8.3 0.8,0.8 Z")
         .attr('class', 'agent')
         .attr('transform', 'translate(' + (traj_x(pos[0]) - 7.5) + ',' + (traj_y(pos[1]) - 7.5) + ') rotate(' + (360 - or) + ' ' + (7.5) + ' ' + (7.5) + ')')
-    // .style('transform', 'translate(' + (traj_x(pos[0]) - 7.5) + 'px ,' + (traj_y(pos[1]) - 7.5) + 'px) rotate(' + or + 'deg)')
 }
 
 function updatehps(svg, data, step) {
@@ -144,46 +128,6 @@ function updatehps(svg, data, step) {
     }
 }
 
-function draw_elem_traj(svg, data, id) {
-
-
-    $('.hdots').remove();
-    let tkeys = Object.keys(data);
-
-    for (let i = 0; i < tkeys.length; i++) {
-        if (tkeys[i]) {
-
-            for (let j = 0; j < data[tkeys[i]].hiddens.length; j++) {
-
-                dotintraj(svg, data[tkeys[i]].positions[j][0], data[tkeys[i]].positions[j][1], data[tkeys[i]].hiddens[j][id], tkeys[i], j, col(data[tkeys[i]].hiddens[j][id]))
-
-            }
-        }
-    }
-}
-
-
-function draw_rule_traj(svg, data, rule, id) {
-
-
-    let activ = get_activ(id);
-
-    $('.hdots').remove();
-    let tkeys = Object.keys(data);
-
-    for (let j = 0; j < activ.length; j++) {
-        for (let i = 0; i < activ[j][1] - activ[j][0]; i++) {
-
-
-            // console.log(activ[j][0] + i);
-            dotintraj(svg, data[episode].positions[activ[j][0] + i][0], data[episode].positions[activ[j][0] + i][1], '', episode, activ[j][0] + i, rule.color)
-        }
-
-    }
-
-
-}
-
 
 function find_cur_dot(svg, step) {
 
@@ -191,7 +135,8 @@ function find_cur_dot(svg, step) {
         last_circle.attr("r", 3).attr('fill', 'steelblue')
     }
 
-    let cirs = svg.selectAll('.perst').filter((d) => d.id === step);
+
+    let cirs = svg.selectAll('.perst').filter((d) => (d ? d.id === step : false));
 
 
     cirs.attr('fill', 'red').attr('r', 4.5);
@@ -201,40 +146,19 @@ function find_cur_dot(svg, step) {
 
 }
 
-function dotintraj(svg, x, y, val, epis, step, color) {
 
-    svg.append("circle")
-        .attr("class", "hdots")
-        .attr('cx', traj_x(x) - 1.75)
-        .attr('cy', traj_y(y) - 1.75)
-        .attr('fill', color)
-        .attr('stroke-style', 'black')
-        .attr("r", 3.5)
-        .attr('episode', epis)
-        .attr('step', step)
+function update_ts(svg) {
+
+    let svbbox = svg.node().getBoundingClientRect();
+    ts_y = d3.scaleLinear().rangeRound([svbbox.height - 10, 0]);
+    ts_x = d3.scaleLinear().rangeRound([0, svbbox.width - 10]);
+
+
 }
-
-
-async function selTsne(data, ts_type) {
-
-    switch (ts_type) {
-        case '1':
-            makeState(d3.select('#tsne'), data);
-            break;
-        case '2':
-            makeElem(d3.select('#tsne'), data);
-            break;
-        case '3':
-            makeAbs(d3.select('#tsne'), data);
-            break;
-        default:
-    }
-}
-
 
 function makeState(svg, data) {
 
-   myWorker.terminate();
+    myWorker.terminate();
     myWorker = new Worker("static/js/worker.js");
 
     let svbbox = svg.node().getBoundingClientRect();
@@ -242,10 +166,10 @@ function makeState(svg, data) {
     ts_x = d3.scaleLinear().rangeRound([0, svbbox.width - 10]);
 
     svg.selectAll('g').transition().delay(300).remove();
-    let g1 = svg.append('g');
+    let g1 = svg.append('g').attr('id', 'lay');
 
 
-    initdrawCircles(g1, data.length, 'steelblue', svg);//, 'click', switchst);
+    initdrawCircles(g1, data.length, 'steelblue');
 
     myWorker.onmessage = function (e) {
         drawCircles(g1, e.data);
@@ -258,117 +182,7 @@ function makeState(svg, data) {
 }
 
 
-function makeElem(svg, data) {
-
-    let perElem = data[0].map(function (col, i) {
-        return data.map(function (row) {
-            return row[i];
-        });
-    });
-
-    svg.selectAll('g').transition().delay(300).remove();
-    let g2 = svg.append('g');
-    ts_x.domain([-1, 1]);
-    ts_y.domain([-1, 1]);
-    const average = list => list.reduce((prev, curr) => prev + curr) / list.length;
-    g2.selectAll(".bg").data(perElem).enter().append('circle')
-        .attr("class", "bg")
-        .attr('cx', (d) => {
-            return ts_x(0)
-        })
-        .attr('cy', (d) => {
-            return ts_y(0)
-        })
-        .attr('fill', function (d, i) {
-            return col(average(perElem[i]))
-        })
-        .attr("r", '3')
-        .attr('num', (d, i) => {
-            return i
-        }).style('cursor', 'pointer').style('opacity', '0.8');
-
-    initdrawCircles(g2, perElem.length, 'steelblue', svg);// 'click', ts_add);
-
-    myWorker.onmessage = function (e) {
-        drawCircles(g2, e.data);
-        g2.selectAll(".bg").data(e.data)
-            .transition()
-            .delay(170)
-            .attr('cx', (d) => {
-                return '0'
-            })
-            .attr('cy', (d) => {
-                return '0'
-            })
-            .attr('transform', (d) => {
-                return 'translate(' + ts_x(d[0]) + ',' + ts_y(d[1]) + ')'
-            })
-
-    };
-
-    myWorker.postMessage([perElem, opt]);
-
-}
-
-
-function makeAbs(svg, data) {
-
-    let perElem = data[0].map(function (col, i) {
-        return data.map(function (row) {
-            return Math.abs(row[i]);
-        });
-    });
-
-    let perElem2 = data[0].map(function (col, i) {
-        return data.map(function (row) {
-            return row[i];
-        });
-    });
-
-    svg.selectAll('g').transition().delay(300).remove();
-    let g2 = svg.append('g');
-
-    const average = list => list.reduce((prev, curr) => prev + curr) / list.length;
-    initdrawCircles(g2, perElem.length, 'steelblue', svg);// 'click', ts_add);
-    g2.selectAll(".bg").data(perElem).enter().append('circle')
-        .attr("class", "bg")
-        .attr('cx', (d) => {
-            return ts_x(0)
-        })
-        .attr('cy', (d) => {
-            return ts_y(0)
-        })
-        .attr('fill', function (d, i) {
-            return col(average(perElem2[i]))
-        })
-        .attr("r", '3')
-        .attr('num', (d, i) => {
-            return i
-        }).style('cursor', 'pointer').style('opacity', '0.8');
-
-
-    myWorker.onmessage = function (e) {
-        drawCircles(g2, e.data);
-        g2.selectAll(".bg").data(e.data)
-            .transition()
-            .delay(170)
-            .attr('cx', (d) => {
-                return '0'
-            })
-            .attr('cy', (d) => {
-                return '0'
-            })
-            .attr('transform', (d) => {
-                return 'translate(' + ts_x(d[0]) + ',' + ts_y(d[1]) + ')'
-            })
-
-    };
-
-    myWorker.postMessage([perElem, opt]);
-}
-
-
-function initdrawCircles(grp, dataln, color, event, call, svg) {
+function initdrawCircles(grp, dataln, color) {
     ts_x.domain([-1, 1]);
     ts_y.domain([-1, 1]);
 
@@ -387,9 +201,6 @@ function initdrawCircles(grp, dataln, color, event, call, svg) {
         .attr('num', (d, i) => {
             return i
         })
-    /*        .on(event, call)
-            .on('mouseenter', ts_enter)
-            .on('mouseout', ts_out);*/
 
 
     lasso = d3.lasso()
@@ -440,6 +251,5 @@ function updateDomain(data) {
         return d[1];
     }) + 2]);
 }
-
 
 

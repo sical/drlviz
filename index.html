@@ -1,8 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-
-    <!-- Global site tag (gtag.js) - Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=UA-105697527-3"></script>
     <script>
         window.dataLayer = window.dataLayer || [];
@@ -15,102 +13,8 @@
 
         gtag('config', 'UA-105697527-3');
     </script>
-
     <meta charset="UTF-8">
     <title>DRLViz</title>
-
-    <style>
-        #tsne circle {
-            fill-opacity: 0.5;
-        }
-
-        .lasso path {
-            stroke: rgb(80, 80, 80);
-            stroke-width: 2px;
-        }
-
-        .lasso .drawn {
-            fill-opacity: .05;
-        }
-
-        .lasso .loop_close {
-            fill: none;
-            stroke-dasharray: 4, 4;
-        }
-
-        .lasso .origin {
-            fill: #3399FF;
-            fill-opacity: .5;
-        }
-
-        .not_possible {
-            fill: rgb(200, 200, 200);
-        }
-
-        .possible {
-            fill: #EC888C;
-        }
-
-        .selected {
-            fill: steelblue;
-        }
-
-        #trajs g .line {
-            opacity: 0.25;
-        }
-
-        .currentepisode {
-            opacity: 1 !important;
-            stroke-width: 2px;
-        }
-
-        #up-main g {
-            pointer-events: all;
-        }
-
-        #up-main g.row:hover {
-            opacity: 0.8;
-        }
-
-        .annelbg:hover {
-            opacity: 0.8;
-            fill: rgb(254, 234, 169) !important;
-
-        }
-
-        #annotate g {
-            pointer-events: none;
-        }
-
-        #annotate rect, .annheader {
-            pointer-events: all;
-            cursor: pointer;
-        }
-
-        .selcol {
-            opacity: 1 !important;
-            fill: rgb(238, 216, 129) !important;
-        }
-
-        .sliderticks {
-            display: flex;
-            justify-content: space-between;
-            padding: 0 10px;
-        }
-
-        .sliderticks p {
-            position: relative;
-            display: flex;
-            justify-content: center;
-            text-align: center;
-            width: 1px;
-            background: #D3D3D3;
-            height: 10px;
-            line-height: 40px;
-            margin: 0 0 20px 0;
-        }
-
-    </style>
 
     <script src="static/js/jquery.min.js"></script>
 
@@ -127,12 +31,13 @@
     <script src="static/js/timeline.js"></script>
     <script src="static/js/draghandler.js"></script>
     <script src="static/js/d3-lasso.min.js"></script>
-    <script src="static/js/fuzzy.js"></script>
     <script src="static/js/tsne.js"></script>
+
     <link href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet"
           integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
 
     <link href="static/css/lg.css" rel="stylesheet"/>
+
     <script>
         let episode = "episode0";
         let whichstep = "0";
@@ -145,13 +50,10 @@
 
     let megadata;
     let colors = ["#3366cc", "#dc3912", "#ff9900", "#109618", "#990099", "#0099c6", "#dd4477", "#66aa00", "#b82e2e", "#316395", "#994499", "#22aa99", "#aaaa11", "#6633cc", "#e67300", "#8b0707", "#651067", "#329262", "#5574a6", "#3b3eac"];
-    // let colar = [['#4D3311', '#EFF0E8', '#233E34'], ['#2e0095', '#2aff73', '#a90000'], ['#362F87', '#87BD84', '#f5f33c'], ['#060614', '#ab6f71', '#fafabf'], ['#4d3311', '#eef0ea', '#233e34'], ['#3c0a54', '#5b9b89', '#f2e53f']];
-    let colar = [['#2266a6', '#effce5', '#bf6b09'], ['#2e0095', '#2aff73', '#a90000'], ['#362F87', '#87BD84', '#f5f33c'], ['#060614', '#ab6f71', '#fafabf'], ['#4d3311', '#eef0ea', '#233e34'], ['#3c0a54', '#5b9b89', '#f2e53f']];
+    let colar = [['#2266a6', '#effce5', '#bf6b09']];
     let col = d3.scaleLinear().domain([-1, 0, 1]).range(colar[0]).interpolate(d3.interpolateHcl);
     let auto = false;
     let keymap = {};
-    let order = 0;
-    let ts_type = 1;
     let nb_ep = 1;
     let nb_gen = 0;
     let nbload = 1;
@@ -161,24 +63,9 @@
     let sw;
     let edit = false;
     let can_pad = 22;
-    let rules = {};
-    let operators = ["&plusmn;", "<", ">"];
-    let st_nam = ['Health', 'HP', 'PV', 'orVar', 'ambi'];
-    let shown;
-    let rule_nb = 0;
-    let nb_main = 512;
-    let zoomer = d3.zoom().scaleExtent([1 / 2, 4]).on("zoom", zoom);
-    let wheelnb = 0;
     let opval = 1;
     let twidth;
     let memst = 130;
-    let book = [];
-    let test = true;
-    let actions = ["&#x2190;", "&#x2192;", "&#x2191;", "&#x2193;", "&#x2196;", "&#x2199;", "&#x2197;", "&#x2198;"];
-    let col_size = 30;
-    let mod = true;
-    let sorttopactiv = false;
-    let last_circle;
     let hiddencrops = [[], [], []];
     let compact = false;
     let sortype = "0";
@@ -188,64 +75,39 @@
     let selnb = 0;
     let tempar = [[], [12, 381, 500, 496, 485], [421, 161, 168, 31], [108, 266, 332], [220], [], []];
     let tempna = ['HP in FoV', 'Directions', 'No HP', 'Health', 'Misc'];
-
+    //        let tempar = [[], [], [], [], [], [], []];
+    //      let tempna = ['Group 1', 'Group 2', 'Group 3', 'Group 4', 'Group 5'];
     let antarger = 1;
 
 
-    let cropped = {'ruleid': '', 'sel': [], 'avgs': []};
-
-
-    let compute = {
-        '&lt;': function (x, y, z) {
-            return (x < y)
-        },
-        '&gt;': function (x, y, z) {
-            return (x > y)
-        },
-        '&plusmn;': function (x, y, z) {
-            return (x >= y * (1 - z) && x <= y * (1 + z))
-        }
-    };
-
-
-    function zoom() {
-        //   g.attr("transform", d3.event.transform);
-    }
-
-
-    var lasso_start = function () {
+    let lasso_start = function () {
         lasso.items()
-            .attr("r", 3.5) // reset size
+            .attr("r", 3.5)
             .classed("not_possible", true)
             .classed("selected", false);
     };
 
-    var lasso_draw = function () {
+    let lasso_draw = function () {
 
-        // Style the possible dots
         lasso.possibleItems()
             .classed("not_possible", false)
             .classed("possible", true);
 
-        // Style the not possible dot
         lasso.notPossibleItems()
             .classed("not_possible", true)
             .classed("possible", false);
     };
 
-    var lasso_end = function () {
-        // Reset the color of all dots
+    let lasso_end = function () {
         lasso.items()
             .classed("not_possible", false)
             .classed("possible", false);
 
-        // Style the selected dots
         lasso.selectedItems()
             .classed("selected", true)
             .attr("r", 7);
 
         lasso.selectedItems();
-        // Reset the style of the not selected dots
         lasso.notSelectedItems()
             .attr("r", 3.5);
 
@@ -292,12 +154,12 @@
 
     function sqs2rule(svg, nb, activs, name, id) {
 
-        nb += Object.keys(abstr3).length - 2;
+        nb += Object.keys(abstr3).length - 1;
 
-        draw_rule_activation(svg, nb * padding - rowh / 2 - 2, activs, 'steelblue', id);
+        draw_rule_activation(svg, nb * padding - rowh / 2 - 1, activs, 'steelblue', id);
 
         svg.append('text')
-            .attr('x', '28')
+            .attr('x', '35')
             .attr('y', nb * padding)
             .attr('font-family', 'sans-serif')
             .attr('font-size', '14')
@@ -306,7 +168,8 @@
 
         svg.append('line')
             .attr('class', 'svrl')
-            .attr('x1', 20)
+            .style('stroke-width', '1px')
+            .attr('x1', 25)
             .attr('x2', sswidth)
             .attr('y1', (nb * padding) + 12)
             .attr('y2', (nb * padding) + 12);
@@ -314,38 +177,6 @@
 
 
     let lasso;
-
-    function pan() {
-
-        if (wheelnb < 2000 && d3.event.wheelDeltaY > 0) {
-            wheelnb += d3.event.wheelDeltaY;
-
-        } else if (d3.event.wheelDeltaY < 0 && wheelnb > 0) {
-            wheelnb += d3.event.wheelDeltaY;
-
-        }
-        let ctx = context_matrix;
-
-        let sc = d3.scaleLinear().domain([0, 2000]).range([1, 0.001]);
-
-
-        nb_main = 512 * Math.min(1, Math.max(sc(wheelnb), 0.01));
-
-        if (!shown) {
-            // draw_matrix(megadata[episode].hiddens, ctx, col, 0, memst, nb_main, twidth);
-
-            mega_draw_matrix(megadata[episode].hiddens, ctx, col, 0, memst, hiddencrops[1], nb_main, hiddencrops[0]);
-            hiddencrops[1] = []
-
-        } else {
-            let sqs = get_activ(shown);
-            draw_sorted_matrix(megadata[episode].hiddens, context_matrix, col, can_pad, memst, sqs, nb_main);
-        }
-
-        // console.log(sc(wheelnb));
-
-        //zoomer.translateBy(svg.transition().duration(100), d3.event.wheelDeltaX, d3.event.wheelDeltaY);
-    }
 
     let bod = $('body');
 
@@ -365,7 +196,7 @@
             nb_ep++;
             nbload++;
 
-            $('#epilist').append('<div style="opacity:0.5;background-color: ' + colors[tiep] + ';" class="epbox" id="boxep' + (tiep) + '"><img id="loadindep" src="static/assets/loading.gif"></div>');
+            $('#epilist').append('<div style="opacity:0.5;background-color: ' + colors[tiep] + ';" class="epbox" id="boxep' + (tiep) + '"><img id="loadindep" src="/static/assets/loading.gif"></div>');
 
             $.ajax({
                 type: "GET",
@@ -383,85 +214,25 @@
 
     });
 
-    bod.on('click', '#up-main .row', function () {
-
-        if (mod) {
-            let num = $(this).attr('num');
-            let res = detail_combo(num);
-
-            if (Object.keys(res).length > 0) {
-                draw_details(res, num)
-            } else {
-                d3.selectAll('.detail_row').remove();
-            }
-        }
-    });
-
-
-    bod.on('click', '.makeep', async function () {
-        $('.makeep').css('opacity', '0.2');
-
-        if (!recording) {
-            recording = true;
-            let tnep = nbgen;
-            let tiep = nb_ep;
-            nb_ep++;
-            nbgen++;
-            $('#epilist').append('<div style="opacity:0.5;background-color: ' + colors[tiep] + ';" class="epbox" id="boxep' + (tiep) + '"><img id="loadindep" src="static/assets/loading.gif"></div>');
-            $.ajax({
-                type: "GET",
-                url: "/makeep",
-                success: function (d) {
-                    let id = 'episode' + (tiep);
-                    megadata[id] = tofloat($.parseJSON(d));
-                    update_traj(megadata[id].positions, svg_traj, id);
-                    $('#loadindep').replaceWith('<p> G' + (tnep) + ' </p>');
-                    $('.makeep').css('opacity', '1');
-                    recording = false;
-                }
-            });
-        }
-    });
-
-
-    bod.on('click', '.hyptb', function () {
-            let td = $($(this).parent()[0]);
-            let stepid = td.attr('step');
-
-            whichstep = parseInt(stepid) + 1;
-            update_step(whichstep);
-            maketime();
-        }
-    );
-
-
     function hard_update() {
 
-
-        up_clean();
-        make_combo();
+        doTicks();
 
         cw = ((twidth - 6) * ratio) / (megadata[episode].health.length);
-        // $('#timeline').css('width', ((twidth * megadata[episode].actions.length) / 524) + 'px');
         let ctx = context_matrix;
         ctx.clearRect(0, 0, 99999, 12000);
         mega_draw_matrix(megadata[episode].hiddens, ctx, col, 0, memst, [], hiddencrops[2], []);
-
-        //  draw_matrix(megadata[episode].hiddens, ctx, col, 0, memst, nb_main);
         draw_metrics(megadata[episode], ctx, 0, 915);
+
         if (episode !== 'all' || nb_ep <= 3)
             makeState(svg_tsne, megadata[episode].hiddens);
 
         maketime();
 
         timeline_init(megadata[episode], twidth);
-        let keys = Object.keys(rules);
 
-        for (let i = 0; i < keys.length; i++) {
-            //  appendRule(svg_timelien, rules[keys[i]], i + 1, get_activ(keys[i]), keys[i])
-        }
-        //graph_deter();
-        update_step(whichstep);
+
+        console.log(whichstep);
         update_line(whichstep);
 
 
@@ -479,7 +250,7 @@
 
         svg_tsne.call(lasso);
 
-
+        update_step(whichstep);
     }
 
     function fastf() {
@@ -563,6 +334,9 @@
             update_line(whichstep);
             maketime();
         }
+        else if (auto) {
+            switchauto()
+        }
     }
 
     function play() {
@@ -638,26 +412,62 @@
             else if (keymap[67]) { // c
                 hcrop()
             }
+            else if (keymap[82]) { // r
+
+                let elems = tempar[antarger];
+
+                sel2mask(elems)
+            }
+            else if (keymap[84]) { // t
+
+
+                let elems = tempar[antarger];
+
+
+                reverse_sel2mask(elems)
+            }
+            else if (keymap[77]) { // m
+
+                if (episode === 'all') {
+
+                    switchep(megadata, "episode0");
+                    hard_update()
+                } else {
+
+                    megamerge();
+                    hard_update()
+
+                }
+
+            }
+            else if (keymap[83]) { // s
+                sortype = '' + (parseInt(sortype) + 1 % 7);
+                document.getElementById("sort-sel").selectedIndex = parseInt(sortype);
+                mega_draw_matrix(megadata[episode].hiddens, context_matrix, col, can_pad, memst, hiddencrops[1], hiddencrops[2], hiddencrops[0]);
+
+            }
+            if (keymap[17]) {  // ctrl + shift + a
+                if (keymap[16])
+                    if (keymap[65])
+                        switchscen()
+            }
+            else if (keymap[187] || keymap[107]) { // +
+
+                $('.plusep').trigger('click')
+            }
         }
 
         else {
             if (keymap[13]) {
+
                 let bbox = $('#chann');
                 let col = bbox.attr('nb');
-                tempna[col] = bbox.val();
+                tempna[col - 1] = bbox.val();
 
                 bbox.css('display', 'none');
 
                 d3.selectAll('.annheader[nb="' + col + '"]').text(bbox.val())
 
-                edit = false;
-            }
-
-            else if (keymap[27]) {
-                let bbox = $('#chann');
-
-
-                bbox.css('display', 'none');
                 edit = false;
             }
         }
@@ -687,6 +497,32 @@
 
     }
 
+    function switchscen() {
+        if (scenario === 'health_gathering_supreme') {
+
+            $.ajax({
+                type: "GET",
+                url: "/change_scenario/my_way_home",
+                processData: false,
+                contentType: false,
+                success: function (d) {
+                    document.location.reload(true);
+                }
+            })
+        } else {
+
+
+            $.ajax({
+                type: "GET",
+                url: "/change_scenario/health_gathering_supreme",
+                processData: false,
+                contentType: false,
+                success: function (d) {
+                    document.location.reload(true);
+                }
+            })
+        }
+    }
 
     d3.json("data.json")
         .on("progress", function (evt) {
@@ -709,206 +545,141 @@
         })
         .mimeType("application/json")
         .get(function (data) {
-            megadata = data;
-            svg_traj = d3.select('#trajs');
-            svg_tsne = d3.select('#tsne');
-            svg_col1 = d3.select('#col1svg');
-            canvas_matrix = d3.select('#matrix-canvas');
 
-            let theight = $(window).height() * 0.68;
+                megadata = data;
+                svg_traj = d3.select('#trajs');
+                svg_tsne = d3.select('#tsne');
+                svg_col1 = d3.select('#col1svg');
+                canvas_matrix = d3.select('#matrix-canvas');
 
-            twidth = $('#matrix-canvas').parent().width() - 235;
-
-
-            $('#col1svg').css('width', (twidth + 28) + 'px');
-
-            $('#timeline').css('width', (twidth) + 'px');
-
-            canvas_matrix.style('height', theight + 'px');
-            canvas_matrix.style('width', twidth + 'px');
-
-            context_matrix = canvas_matrix.node().getContext('2d');
-            place_svg($('#col1svg'), $('#nb1').width());
+                let theight = $(window).height() * 0.97 - 300;
+                //235
+                twidth = $('#matrix-canvas').parent().width() - 255;
 
 
-            context_matrix.scale(3, 3);
-            megadata[episode] = tofloat(megadata[episode]);
-            bunch = megadata[episode].hiddens[0].length;
+                $('#col1svg').css('width', (twidth + 28) + 'px');
 
-            ratio = (24948 / twidth) / 3;
+                $('#timeline').css('width', (twidth) + 'px');
 
-            cw = ((twidth - 6) * ratio) / (megadata[episode].health.length);
+                canvas_matrix.style('height', theight + 'px');
+                canvas_matrix.style('width', twidth + 'px');
 
-
-            let rest = (theight * 542) / 685;
-            d3.select('#currhidd').style('height', rest);
+                context_matrix = canvas_matrix.node().getContext('2d');
+                place_svg($('#col1svg'), $('#nb1').width());
 
 
-            ve_init_rows(d3.select('#currhidd'), megadata[episode].hiddens[whichstep], rest);
+                context_matrix.scale(3, 3);
 
-            mega_draw_matrix(megadata[episode].hiddens, context_matrix, col, 0, memst, [], [], []);
+                megadata[episode] = tofloat(megadata[episode]);
+                bunch = megadata[episode].hiddens[0].length;
 
-            //draw_matrix(megadata[episode].hiddens, ctx, col, 0, memst, nb_main, twidth);
-            draw_metrics(megadata[episode], context_matrix, 0, 915);
-            init_svg(can_pad, 5, $('#col1svg').height());
+                ratio = (24948 / twidth) / 3;
 
-
-            // svg_col1.call(zoomer)
-            //     .on("wheel.zoom", null) // disables default zoom wheel behavior
-            //     .on("wheel", pan);
+                cw = ((twidth - 6) * ratio) / (megadata[episode].health.length);
 
 
-            // d3.select('#seq-canvas').node().getContext('2d').scale(3, 3);
-            // setup(megadata[episode].hiddens, d3.select('#seq-canvas').node().getContext('2d'), 10, 10, whichstep, col, order, megadata[episode].hiddens[0].length, 10);
-            //init_dist_svg(megadata[episode].probabilities[whichstep], d3.select('#distrib-svg'), 350, 100);
-            draw_obs();
+                let rest = (theight * 542) / 685;
+                d3.select('#currhidd').style('height', rest + 15);
+                ve_init_rows(d3.select('#currhidd'), megadata[episode].hiddens[whichstep], rest);
+
+                mega_draw_matrix(megadata[episode].hiddens, context_matrix, col, 0, memst, [], [], []);
+
+                draw_metrics(megadata[episode], context_matrix, 0, 915);
+                init_svg(can_pad, 5, $('#col1svg').height());
+                draw_obs();
+
+                let tbbox = svg_traj.node().getBoundingClientRect();
+                maketime();
+                draw_traj(megadata, svg_traj, tbbox.width - 10, tbbox.height - 10);
+                makeState(svg_tsne, megadata[episode].hiddens);
+                inieplist();
+                draw_line(megadata[episode].probabilities[whichstep], d3.select('#distrib-svg'), 80, 80);
+                setInterval(play, 130);
+                timeline_init(megadata[episode], twidth);
+                $('.container').css('visibility', '');
+
+                dragElement(document.getElementById('timelien'));
 
 
-            let tbbox = svg_traj.node().getBoundingClientRect();
-            maketime();
-
-            draw_traj(megadata, svg_traj, tbbox.width - 10, tbbox.height - 10);
-            makeState(svg_tsne, megadata[episode].hiddens);
-            //loadjson();
-            inieplist();
-            draw_line(megadata[episode].probabilities[whichstep], d3.select('#distrib-svg'), 80, 80);
-            setInterval(play, 180);
-            timeline_init(megadata[episode], twidth);
-            //d3.select('#seq-canvas').on('mousemove', seq_hover);
-            $('.container').css('visibility', '');
-
-            dragElement(document.getElementById('timelien'));
+                lasso = d3.lasso()
+                    .closePathSelect(true)
+                    .closePathDistance(100)
+                    .items(d3.selectAll('.perst'))
+                    .targetArea(svg_tsne)
+                    .on("start", lasso_start)
+                    .on("draw", lasso_draw)
+                    .on("end", lasso_end);
+                svg_tsne.call(lasso);
 
 
-            lasso = d3.lasso()
-                .closePathSelect(true)
-                .closePathDistance(100)
-                .items(d3.selectAll('.perst'))
-                .targetArea(svg_tsne)
-                .on("start", lasso_start)
-                .on("draw", lasso_draw)
-                .on("end", lasso_end);
-            svg_tsne.call(lasso);
+                svg_traj.append("g")
+                    .attr("class", "brush")
+                    .call(d3.brush().extent([[0, 0], [tbbox.width, tbbox.height]])
+                        .on('brush', traj_brushmove)
+                        .on('end', traj_brushend)
+                    );
+
+                draw_agent_path(svg_traj, megadata[episode].positions[whichstep], megadata[episode].orientations[whichstep]);
 
 
-            svg_traj.append("g")
-                .attr("class", "brush")
-                .call(d3.brush().extent([[0, 0], [tbbox.width, tbbox.height]])
-                    .on('brush', traj_brushmove)
-                    .on('end', traj_brushend)
-                );
+                d3.select('#currhidd').append("g")
+                    .attr("class", "brush")
+                    .call(d3.brushY().extent([[45, 10], [70, rest + 10]])
+                        .on('brush', ve_brushmove)
+                        .on('end', ve_brushend)
+                    );
 
-            prefillsvg();
-
-            draw_agent_path(svg_traj, megadata[episode].positions[whichstep], megadata[episode].orientations[whichstep]);
+                intit_annot(d3.select('#annotate'));
 
 
-            d3.select('#currhidd').append("g")
-                .attr("class", "brush")
-                     .call(d3.brushY().extent([[45, 10], [70, rest + 10]])
-                    .on('brush', ve_brushmove)
-                    .on('end', ve_brushend)
-                );
-
-            intit_annot(d3.select('#annotate'))
-
-        });
-
-
-    bod.on('click', '#col1svg', function (e) {
-
-        let elemHeig = Math.min((716.8 / cropped.sel.length), 25);
-        let trt = d3.scaleLinear().domain([0, elemHeig * cropped.sel.length]).range([0, cropped.sel.length])
-        let ey = e.clientY - memst;
-
-        let selem = Math.floor((ey / elemHeig));
-
-        console.log(trt(ey));
-        console.log(selem);
-
-        if (cropped.sel[selem]) {
-            if (!filterValue(rules[cropped.ruleid].hiddens, 'id', cropped.sel[selem])) {
-                rules[cropped.ruleid].hiddens.push({'id': cropped.sel[selem], 'avg': cropped.avgs[selem], 'range': 0.4})
-            } else {
-                for (let i = 0; i < rules[cropped.ruleid].hiddens.length; i++) {
-
-                    if (rules[cropped.ruleid].hiddens[i].id === cropped.sel[selem]) {
-                        // rules[cropped.ruleid].hiddens[i].avg = cropped.avgs[selem];
-                        break;
-
-                    }
-
-                }
+                window.addEventListener('resize', reportWindowSize);
+                $('.progress').addClass('hide');
+                $('#loadall').remove()
             }
+        )
+    ;
 
-            let sqs = hiddenactiv(cropped.sel[selem], cropped.avgs[selem], 0.3);
-
-            let scx = d3.scaleLinear().domain([0, megadata[episode].health.length - 1]).range([0, twidth - 10]);
-
-
-            svg_col1.selectAll('.rlsq').remove();
-
-            for (let i = 0; i < sqs.length; i++) {
-                svg_col1.append('rect')
-                    .attr('class', 'rlsq')
-                    .attr('x', () => {
-                        return scx(sqs[i][0]) + can_pad
-                    })
-                    .attr('y', 0)
-                    .attr('width', () => {
-                        return scx((sqs[i][1] - sqs[i][0]) + 1)
-                    })
-                    .attr('height', $('#col1svg').height())
-                    .attr('fill', col(cropped.avgs[selem]))
-                    .style('opacity', '0.3')
-            }
-
-            console.log(common(sqs, get_activ(cropped.ruleid)));
-
-        }
-    });
+    function reportWindowSize() {
 
 
-    function common(hsq, rsq) {
+        console.log('heu');
+        let tbbox = svg_traj.node().getBoundingClientRect();
+
+        svg_traj.selectAll('*').remove();
+        draw_traj(megadata, svg_traj, tbbox.width - 10, tbbox.height - 10);
+        update_ts(svg_tsne);
+        drawCircles(d3.select('#lay'), Y);
 
 
-        let sum = 0;
-        for (let i = 0; i < megadata[episode].health.length; i++) {
-            if (inact(i, hsq) && inact(i, rsq)) {
-                sum += 1
-            }
-        }
+        let theight = $(window).height() * 0.97 - 300;
+//235
+        twidth = $('#matrix-canvas').parent().width() - 255;
 
 
-        return sum / Math.max(countactime(hsq), countactime(rsq))
+        $('#col1svg').css('width', (twidth + 28) + 'px');
+
+        $('#timeline').css('width', (twidth) + 'px');
+
+        canvas_matrix.style('height', theight + 'px');
+        canvas_matrix.style('width', twidth + 'px');
+
+
+        let rest = (theight * 542) / 685;
+        d3.select('#currhidd').style('height', rest + 15);
+
+        doTicks();
+        scaleAll();
+
+        svg_col1.selectAll('.tl').attr('height', $('#col1svg').height());
+        svg_col1.selectAll('.tl').attr('y2', $('#col1svg').height());
+
+
+        ve_resize(d3.select('#currhidd'), rest + 15)
+        //TODO: VE MATRIX
+
+        // TODO: Annotate
     }
 
-    function countactime(sqs) {
-
-        let sum = 0;
-
-        for (let i = 0; i < sqs.length; i++) {
-
-            sum += sqs[i][1] - sqs[i][0]
-
-        }
-
-        return sum
-
-    }
-
-    function inact(k, sqs) {
-
-
-        for (let i = 0; i < sqs.length; i++) {
-
-            if (sqs[i][0] <= k && sqs[i][1] >= k) {
-                return true
-            }
-
-        }
-        return false;
-    }
 
     function activ2sq(activs, threshold) {
 
@@ -937,67 +708,39 @@
 
     }
 
-
-    function hiddenactiv(id, avg, range) {
-
-        let activs = [];
-        for (let i = 0; i < megadata[episode].hiddens.length; i++) {
-
-            if (megadata[episode].hiddens[i][id] <= avg * 1 + range && megadata[episode].hiddens[i][id] >= avg * 1 - range) {
-
-                activs.push(true)
-            }
-            else {
-                activs.push(false)
-            }
-        }
-        return activ2sq(activs, 0)
-    }
-
-
     function place_svg(svg, divsize) {
 
         sw = svg.width();
 
         if (divsize > sw) {
             svg.css('margin-left', 88 + 'px');
-
-
         }
-
 
     }
 
 
     function draw_metrics(data, context, offx, offy) {
-        //     let scales = [d3.scaleLinear().domain([0, 525]).range([0, 748.125]), d3.scaleLinear().domain([0, 100]).range([25, 0])];
-        // draw_metric_line(data.health, context, offx, offy, scales);
-
-
-        //event_line(data.health, context, offx, offy + 40);
         stream_acts(data.probabilities, context, offx, offy)
     }
 
 
     function init_svg(offx, offy, height) {
 
-        let scx = d3.scaleLinear().domain([0, megadata[episode].health.length - 1]).range([0, 748.125]);
+        let scx = d3.scaleLinear().domain([0, megadata[episode].health.length - 1]).range([0, twidth - 6]);
 
         let svg = svg_col1;
-
-        doTicks();
 
 
         svg.append("g")
             .attr("class", "brush")
             .call(d3.brushX()
-                .extent([[offx, 0], [twidth + 14, height]])
+                .extent([[offx, 0], [twidth + 6, height]])
                 .on('brush', brushmove)
                 .on('end', brushend)
             );
 
 
-        var data = [
+        let data = [
             {
                 'x1': offx + scx(whichstep - 10),
                 'y1': 0 + offy,
@@ -1019,12 +762,12 @@
         ];
 
 
-        var drag_behavior = d3.drag()
+        let drag_behavior = d3.drag()
             .on("start", dragstarted)
             .on("drag", dragged);
 
 
-        var lines = svg
+        let lines = svg
             .selectAll('line')
             .data(data)
             .enter()
@@ -1050,14 +793,16 @@
                 }
             }).call(drag_behavior);
 
-        test_rect(svg, offx, offy, scx(whichstep - 10), scx(whichstep), height)
+        test_rect(svg, offx, offy, scx(whichstep - 10), scx(whichstep + 10), height)
+        doTicks();
+
 
     }
 
 
     function test_rect(svg, offx, offy, anc1, anc2, height) {
 
-        var drag_behavior = d3.drag()
+        let drag_behavior = d3.drag()
             .on("start", dragstarted)
             .on("drag", dragged);
 
@@ -1083,11 +828,11 @@
         //TODO: fix index issues
 
         let scx = d3.scaleLinear().domain([0, megadata[episode].health.length - 1]).range([0, twidth - 6]);
-        var dx = d3.event.sourceEvent.offsetX;
+        let dx = d3.event.sourceEvent.offsetX;
 
 
         let step = Math.round(scx.invert(dx));
-
+        //console.log(step + ' -- -- ' + (dx));
 
         if (step > 0 && step < megadata[episode].actions.length) {
             update_step(step);
@@ -1101,13 +846,12 @@
     function update_step(step) {
         whichstep = step;
         draw_obs();
-        update_rules(step);
         draw_agent_path(svg_traj, megadata[episode].positions[step], megadata[episode].orientations[step]);
         $('#stepind').html(step);
         updatehps(svg_traj, megadata[episode].fov, step);
         update_bars(megadata[episode].probabilities[whichstep], d3.select('#distrib-svg'), 80, 80, megadata[episode].actions[whichstep]);
         find_cur_dot(svg_tsne, step);
-        ve_update(d3.select('#currhidd'), megadata[episode].hiddens[whichstep])
+        //ve_update(d3.select('#currhidd'), megadata[episode].hiddens[whichstep])
 
     }
 
@@ -1122,8 +866,6 @@
 
 
     function ve_brushmove() {
-        //console.time('Brush handle');
-
 
         let br = $("#currhidd .selection");
 
@@ -1144,8 +886,6 @@
 
         hiddencrops[2] = temp.map(d => d[1]);
 
-        //console.timeEnd('Brush handle');
-
         updatenbh();
 
         mega_draw_matrix(megadata[episode].hiddens, context_matrix, col, can_pad, memst, hiddencrops[1], hiddencrops[2], hiddencrops[0]);
@@ -1160,7 +900,7 @@
 
         if (br.css('display') === 'none') {
             hiddencrops[2] = [];
-            $('#hiddensl').html(512);
+            $('#hiddensl').html('' + megadata[episode].hiddens[0].length);
             mega_draw_matrix(megadata[episode].hiddens, context_matrix, col, can_pad, memst, hiddencrops[1], hiddencrops[2], hiddencrops[0]);
 
         }
@@ -1221,8 +961,7 @@
             let x = parseFloat(br.css('x').slice(0, -2));
             let width = parseFloat(br.css('width').slice(0, -2));
 
-            hiddencrops[0] = [[Math.max(0, Math.round(scx.invert(x))) - 10, Math.min(Math.round(scx.invert(x + width)) - 10, megadata[episode].health.length - 1)]];
-
+            hiddencrops[0] = [[Math.max(0, Math.round(scx.invert(x)) - 10), Math.min(Math.round(scx.invert(x + width)) - 10, megadata[episode].health.length - 1)]];
 
             mega_draw_matrix(megadata[episode].hiddens, context_matrix, col, can_pad, memst, hiddencrops[1], hiddencrops[2], hiddencrops[0]);
 
@@ -1230,633 +969,23 @@
     }
 
     function brushmove() {
-
-
     }
 
-
-    bod.on('click', '.hypex', function () {
-        let con = $(this).parent();
-
-        let id = con.parent().attr('id');
-
-        console.log(id);
-        con.find('.hypex img').css('transform', 'rotate(180deg)');
-        // let res = getTBK(id);
-
-        let step = (whichstep > 0 ? whichstep : 1);
-        let all = get_values(step - 1, step);
-        all[2] = Math.round(all[2] * 100) / 100;
-        all[3] = Math.round(all[3] * 100) / 100;
-        all[4] = Math.round(all[4] * 100) / 100;
-
-        if (!con.find('.stathold').length > 0) {
-
-            con.css('border-left', 'solid black 2px');
-            //  con.prepend('<div class ="hidhold" style="min-height:100px;min-width:100px"> <div> Hiddens</div>' + make_hiddens(id) + '</div>');
-            con.prepend(make_hypex(id, "<div class='stathold' style='min-height:100px;min-width:100px'> <div> Statements</div>"));
-
-        } else {
-            con.css('border-left', '');
-            con.find('.stathold').remove();
-            con.find('.hidhold').remove();
-            con.find('.hypex img').css('transform', '');
-        }
-
-        update_rules(whichstep)
-    });
-
-
-    bod.on('click', '.namchoice', function () {
-
-        let box = $(this);
-        let con = box.parent();
-        let id = con.closest('.hyel').attr('id');
-        let oldnam = con.parent().find('.nam');
-        let oldval = con.parent().parent().find('.baseline')[0].value;
-        let stid = con.parent().parent().attr('class').split(' ')[1];
-        let n = box[0].innerHTML;
-        let old = oldnam[0].innerHTML;
-
-        for (let i = 0; i < rules[id].statements.length; i++) {
-
-            if (rules[id].statements[i].id === stid) {
-                rules[id].statements[i].name = n;
-
-                box.html(old);
-                oldnam[0].innerHTML = n;
-                break;
-
-            }
-        }
-        update_rules(whichstep);
-        let keys = Object.keys(rules);
-
-        d3.selectAll('.svrl').remove();
-        for (let i = 0; i < keys.length; i++) {
-            appendRule(svg_timelien, rules[keys[i]], i + 1, get_activ(keys[i]), keys[i])
-        }
-        //graph_deter()
-
-    });
-
-
-    bod.on('click', '.opchoice', function () {
-
-        let box = $(this);
-        let con = box.parent();
-        let id = con.closest('.hyel').attr('id');
-        let oldnam = con.parent().find('.operator');
-        //  let oldval = con.parent().parent().find('.baseline')[0].value;
-        let stid = con.parent().parent().attr('class').split(' ')[1];
-        let n = box[0].innerHTML;
-        let old = oldnam[0].innerHTML;
-
-        for (let i = 0; i < rules[id].statements.length; i++) {
-
-            if (rules[id].statements[i].id === stid) {
-                rules[id].statements[i].operator = n;
-
-                box.html(old);
-                oldnam[0].innerHTML = n;
-                break;
-
-            }
-        }
-
-        update_rules(whichstep);
-        let keys = Object.keys(rules);
-
-        d3.selectAll('.svrl').remove();
-        for (let i = 0; i < keys.length; i++) {
-            appendRule(svg_timelien, rules[keys[i]], i + 1, get_activ(keys[i]), keys[i])
-        }
-        //graph_deter()
-
-    });
-
-
-    bod.on('change', '.strange', function () {
-
-        let box = $(this);
-
-        let con = box.parent();
-
-        let id = con.closest('.hyel').attr('id');
-
-        let stid = con.parent().attr('class').split(' ')[1];
-
-        console.log(stid);
-
-
-        for (let i = 0; i < rules[id].statements.length; i++) {
-
-            if (rules[id].statements[i].id === stid) {
-                rules[id].statements[i].range = parseFloat(box.val()) / 100;
-
-                break;
-
-            }
-        }
-        update_rules(whichstep);
-
-        d3.selectAll('.svrl').remove();
-        let keys = Object.keys(rules);
-
-        for (let i = 0; i < keys.length; i++) {
-            appendRule(svg_timelien, rules[keys[i]], i + 1, get_activ(keys[i]), keys[i])
-        }
-        //  graph_deter()
-    });
-
-
-    function ruleTime(id) {
-
-        appendRule(svg_timelien, rules[id], Object.keys(rules).length, get_activ(id), id)
-
-    }
-
-
-    function addRule(x, width) {
-
-        rule_nb++;
-
-        let scx = d3.scaleLinear().domain([0, megadata[episode].health.length - 1]).range([0, twidth - 6]);
-
-        let vals = get_values(Math.round(scx.invert(x)), Math.round(scx.invert(x + width)));
-
-        let sts = init_statements(vals);
-
-        rules['rul' + rule_nb] = {'name': 'Rule' + rule_nb + ' (Click to rename)', 'statements': sts, 'color': colors[rule_nb], 'nb': sts.length, 'hiddens': []};
-
-
-//        ruleTime('rul' + rule_nb);
-        //$('#hypocont').append(div);
-        show_rule('rul' + rule_nb);
-
-
-        //  graph_deter()
-
-    }
-
-
-    function make_hypex(id, init) {
-
-        let main = init;
-
-        for (let i = 0; i < rules[id].statements.length; i++) {
-            let curstat = rules[id].statements[i];
-
-            let nam_choices = '';
-
-            for (let j = 0; j < st_nam.length; j++) {
-
-                if (st_nam[j] !== curstat.name) {
-                    nam_choices += '<p class="namchoice">' + st_nam[j] + '</p>'
-                }
-
-            }
-
-            let nam_op = '';
-
-            for (let j = 0; j < operators.length; j++) {
-
-                if (operators[j] !== curstat.operator) {
-                    nam_op += '<p class="opchoice">' + operators[j] + '</p>'
-                }
-
-            }
-
-
-            main += '<div class="statement ' + curstat.id + '"> ' +
-                '<div class="if" style="display: inline-block;padding:4px">If</div> ' +
-
-
-                '<div style="display: inline-block;" class="dropdown">' +
-                ' <button class="nam dropbtn">' + curstat.name + '</button>' +
-                ' <div class="dropdown-content">' + nam_choices + '</div> </div>' +
-
-
-                '<div style="display: inline-block;"> is </div>' +
-
-
-                '<div style="display: inline-block;" class="dropdown">' +
-                ' <button class="operator dropbtn">' + curstat.operator + ' </button>' +
-                ' <div class="dropdown-content">' + nam_op + '</div> </div>';
-
-            if (curstat.range !== undefined) {
-
-                main +=
-
-                    '<div style="display: inline-block;"> <input style ="width:35px" class="strange" type="number" min="0" max ="100" step="1" value="' + (curstat.range * 100) + '"/> %</div>';
-            }
-
-            main +=
-                '<div style="display: inline-block;padding:4px" >of</div>' +
-
-
-                '<div style="display: inline-block;"> <input type="number" style="display: inline-block;width:45px" class="baseline" value="' + (isNaN(curstat.base) ? 'nope' : Math.round(curstat.base * 100) / 100) + '"></div>' +
-
-                '<div style="display:inline-block;padding:4px"><i style="color: darkred" class="fa fa-times stadel"></i> </div>' +
-
-                ' </div>'
-        }
-        main += '</div>';
-
-        return main
-    }
-
-    bod.on('click', '.stadel ', function () {
-
-
-        let con = $(this).parent();
-
-
-        let id = con.parent().parent().parent().parent().attr('id');
-
-        let nam = $(this).parent().parent().find('.nam');
-
-        let stid = $(this).parent().parent().attr('class').split(' ')[1];
-
-
-        console.log(stid);
-
-        nam = nam[0].innerHTML;
-
-        console.log(nam);
-
-
-        for (let i = 0; i < rules[id].statements.length; i++) {
-
-            if (rules[id].statements[i].id === stid) {
-                rules[id].statements.splice(i, 1);
-                break;
-            }
-        }
-
-
-        let tcon = con.parent().parent().parent().parent();
-
-        $(this).parent().parent().parent().find('.statement').remove();
-        if (!$(this).parent().parent().parent().length > 0) {
-
-            $(this).parent().parent().parent().find('.statement').remove();
-        }
-
-        tcon.find('.stathold').append(make_hypex(id, ''));
-
-
-        show_rule(id);
-        let keys = Object.keys(rules);
-
-        d3.selectAll('.svrl').remove();
-        for (let i = 0; i < keys.length; i++) {
-            appendRule(svg_timelien, rules[keys[i]], i + 1, get_activ(keys[i]), keys[i])
-        }
-
-        //graph_deter();
-        update_rules(whichstep)
-
-    });
-
-
-    bod.on('click', '.hypname ', function () {
-        if (!edit) {
-            let text = $(this).find('span').html();
-            $(this).find('span').replaceWith($('<input type="text" id="incat"  maxlength="57" style="margin-top: 5px;vertical-align: middle"/>'));
-            $('#incat').val(text);
-            $('#incat').focus();
-
-            edit = !edit;
-        } else {
-            edit = !edit;
-            let text = $('#incat').val();
-            try {
-                $(this).find('#incat').replaceWith($('<span>').html(text));
-
-                let con = $(this).parent();
-
-                let id = con.parent().attr('id');
-
-                rules[id].name = text;
-                d3.select('.txt' + id).text('');
-                d3.select('.txt' + id).text(text)
-            }
-            catch (e) {
-            }
-        }
-    });
-
-
-    bod.on('click', '.hypnote ', function () {
-        let con = $(this).parent();
-
-        let id = con.parent().parent().attr('id');
-
-        if (shown !== undefined) {
-            if (id === shown) {
-
-                svg_col1.selectAll('.rlsq').remove();
-                shown = undefined;
-                hiddencrops[1] = [];
-                mega_draw_matrix(megadata[episode].hiddens, context_matrix, col, can_pad, memst, hiddencrops[1], hiddencrops[2], hiddencrops[0]);
-
-            } else {
-                shown = id;
-                show_rule(id)
-
-
-            }
-        } else {
-            shown = id;
-            show_rule(id)
-        }
-
-    });
-
-
-    bod.on('click', '.hypdel ', function () {
-        let con = $(this).parent();
-
-        let id = con.parent().parent().attr('id');
-
-        if (shown === id) {
-            svg_col1.selectAll('.rlsq').remove();
-            shown = undefined;
-        }
-
-
-        $(con.parent().parent()).remove();
-        delete rules[id];
-        $('.txt' + id).remove();
-        $('.rect' + id).remove();
-
-
-        d3.selectAll('.svrl').remove();
-
-        let keys = Object.keys(rules);
-
-        for (let i = 0; i < keys.length; i++) {
-            appendRule(svg_timelien, rules[keys[i]], i + 1, get_activ(keys[i]), keys[i])
-        }
-
-
-    });
-
-    function init_statements(vals) {
-        let res = [];
-
-
-        for (let i = 0; i < vals.length; i++) {
-            res.push({'name': st_nam[i], 'operator': operators[0], "range": 0.4, "base": vals[i], 'id': 'stnb' + i})
-        }
-        return res
-    }
-
-
-    function show_rule(id) {
-
-        let sqs = get_activ(id);
-        let scx = d3.scaleLinear().domain([0, megadata[episode].health.length - 1]).range([0, twidth - 6]);
-
-        svg_col1.selectAll('.rlsq').remove();
-
-        hiddencrops[1] = sqs;
-
-        //draw_sorted_matrix(megadata[episode].hiddens, d3.select('#matrix-canvas').node().getContext('2d'), col, can_pad, 10, sqs, nb_main);
-        //draw_cropped_matrix(megadata[episode].hiddens, d3.select('#matrix-canvas').node().getContext('2d'), col, can_pad, memst, sqs);
-        mega_draw_matrix(megadata[episode].hiddens, context_matrix, col, can_pad, memst, sqs, hiddencrops[2], hiddencrops[0]);
-
-        cropped.ruleid = id
-    }
-
-
-    function sort_hptaken() {
-
-        let sqs = [];
-        let mdata = megadata[episode].health;
-
-        for (let i = 1; i < mdata.length; i++) {
-            if (mdata[i] - mdata[i - 1] > 2) {
-
-                if (sqs.length > 0)
-                    if (i - 1 <= sqs[sqs.length - 1][1]) {
-                        sqs[sqs.length - 1][1] = i + 1;
-                        continue
-                    }
-                if (i > 0) {
-                    sqs.push([i - 1, i + 1])
-                }
-
-            }
-        }
-
-        //  draw_cropped_matrix(megadata[episode].hiddens, d3.select('#matrix-canvas').node().getContext('2d'), col, can_pad, memst, sqs);
-        mega_draw_matrix(megadata[episode].hiddens, context_matrix, col, can_pad, memst, sqs, hiddencrops[2], []);
-
-    }
-
-
-    function sort_pvtaken() {
-
-        let sqs = [];
-        let mdata = megadata[episode].health;
-
-        for (let i = 1; i < mdata.length; i++) {
-            if (mdata[i - 1] - mdata[i] > 8) {
-                {
-
-                    if (sqs.length > 0)
-                        if (i - 15 <= sqs[sqs.length - 1][1]) {
-                            sqs[sqs.length - 1][1] = i + 2;
-                            continue
-                        }
-                    if (i > 5) {
-                        sqs.push([i - 15, i + 2])
-                    }
-
-                }
-            }
-
-        }
-        // draw_cropped_matrix(megadata[episode].hiddens, d3.select('#matrix-canvas').node().getContext('2d'), col, can_pad, memst, sqs);
-        mega_draw_matrix(megadata[episode].hiddens, context_matrix, col, can_pad, memst, sqs, hiddencrops[2], []);
-    }
-
-
-    function sort_lowh() {
-
-        let sqs = [];
-        let mdata = megadata[episode].health;
-        let temp = [false];
-
-        for (let i = 1; i < mdata.length; i++) {
-
-            if (mdata[i] <= 20 && !temp[0]) {
-                temp[0] = i;
-                continue
-            }
-
-            if (mdata[i] > 20 && temp[0]) {
-                sqs.push([temp[0], i]);
-                temp[0] = false;
-            }
-
-        }
-        //  draw_cropped_matrix(megadata[episode].hiddens, d3.select('#matrix-canvas').node().getContext('2d'), col, can_pad, memst, sqs);
-        mega_draw_matrix(megadata[episode].hiddens, context_matrix, col, can_pad, memst, sqs, hiddencrops[2], []);
-    }
-
-    function update_rules(step) {
-
-        step = (step > 0 ? step : 1);
-        let all = get_values(step - 1, step);
-        all[2] = Math.round(all[2] * 100) / 100;
-        all[3] = Math.round(all[3] * 100) / 100;
-        all[4] = Math.round(all[4] * 100) / 100;
-
-
-        $('.statement').map(function () {
-            let activ = true;
-
-            let id = $(this).parent().closest('.hyel').attr('id');
-
-            let stsid = $(this).attr('class').split(' ')[1];
-
-            let st = filterValue(rules[id].statements, 'id', stsid);
-
-            if (st.name === 'item1' || st === 'item2') {
-                if (all[st_nam.indexOf(st.name)] !== (st.base > 0.3 ? 1 : 0)) {
-                    activ = false;
-                }
-            } else {
-                if (!compute[st.operator](all[st_nam.indexOf(st.name)], st.base, st.range)) {
-                    activ = false;
-                }
-            }
-            if (activ) {
-                $(this).removeClass('stdact');
-                $(this).addClass('stact');
-            } else {
-                $(this).addClass('stdact');
-                $(this).addClass('stdact');
-            }
-            return 'ok'
-        }).get();
-    }
-
-
-    bod.on('mouseover', '.hyel', function () {
-
-
-        let id = $(this).attr('id');
-
-
-        draw_rule_traj(svg_traj, megadata, rules[id], id)
-    });
-
-
-    bod.on('mouseout', '.hyel', function () {
-
-        $('.hdots').remove();
-    });
-
-
-    function get_activ(id) {
-
-        let sts = rules[id].statements;
-
-        let activs = [];
-
-        for (let i = 1; i <= megadata[episode].health.length; i++) {
-
-            let vals = get_values(i - 1, i);
-            let activ = true;
-
-            for (let j = 0; j < sts.length; j++) {
-                let indx = st_nam.indexOf(sts[j].name);
-
-
-                if (indx === 1 || indx === 2) {
-
-                    if (vals[indx] !== (sts[j].base > 0.5 ? 1 : 0)) {
-                        activ = false;
-                        break;
-                    }
-                } else {
-
-                    if (!compute[sts[j].operator](vals[indx], sts[j].base, sts[j].range)) {
-                        //   if (vals[indx] < sts[j].base * (1 - sts[j].range) || vals[indx] > sts[j].base * (1 + sts[j].range)) {
-                        activ = false;
-                        break;
-                    }
-                }
-            }
-            activs.push(activ)
-        }
-
-
-        return activ2sq(activs, 0);
-
-    }
 
     bod.on('click', '#salcon', function () {
 
         opval = (opval === 0.5 ? 1 : 0.5);
+
         $('.display-img').css('opacity', opval);
 
     });
-
-
-    bod.on('input', '.input-range', function () {
-
-        let temp = $(this).val();
-
-        let id = $(this).parent().parent().attr('nb');
-
-        console.log(id);
-
-        hiddentry(parseFloat(temp), id);
-
-
-    });
-
-    bod.on('change', '.input-range', function () {
-
-        update_bars(megadata[episode].probabilities[whichstep], d3.select('#distrib-svg'), 80, 80, megadata[episode].actions[whichstep])
-    });
-
-
-    function hiddentry(h, id) {
-        let form = new FormData();
-        let ht = megadata[episode].hiddens[whichstep].slice();
-
-        ht[id] = h;
-
-        form.append("hiddens", ht);
-        let res;
-
-        $.ajax({
-            type: "POST",
-            url: "/hiddentry",
-            processData: false,
-            contentType: false,
-            data: form,
-            success: function (d) {
-                console.log(d);
-                res = JSON.parse(JSON.parse(d)['result']);
-                console.log(res);
-                update_bars(res, d3.select('#distrib-svg'), 80, 80, res.indexOf(Math.max(...res)))
-            }
-        });
-    }
 
 
     function maketime() {
 
 
         $('#timebar').remove();
-        $('#timeline').append('<input id="timebar" style="outline: none;" type="range" min="0" max="' + (megadata[episode].actions.length - 1) + '" step="1" value="' + whichstep + '">');
+        $('#timeline').append('<input id="timebar" list="steplist" style="outline: none;" type="range" min="0" max="' + (megadata[episode].actions.length - 1) + '" step="1" value="' + whichstep + '" >');
 
         let tbar = $('#timebar');
 
@@ -1870,7 +999,7 @@
         );
 
         $('#timeline input[type="range"]').on('input', function () {
-            var val = ($(this).val() - $(this).attr('min')) / ($(this).attr('max') - $(this).attr('min'));
+            let val = ($(this).val() - $(this).attr('min')) / ($(this).attr('max') - $(this).attr('min'));
             whichstep = (parseInt($(this).val()) >= 0 ? parseInt($(this).val()) : 0);
             update_step(whichstep);
             update_line(whichstep);
@@ -1949,65 +1078,91 @@
             .text(controlVal);
     });
 
-    bod.on('click', '.selbox', function (e) {
 
-        if (e.target.className !== 'selld')
-            $(this).toggleClass('selhigh');
-    });
+    function sel2mask(data) {
+
+
+        console.log(data);
+
+        $('#epilist').append('<div style="opacity:0.5;background-color: steelblue;" class="epbox" id="boxepgen' + nb_gen + '"><img id="loadindep" src="/static/assets/loading.gif"></div>');
+        let res = [];
+        for (let i = 0; i < megadata[episode].hiddens[0].length; i++) {
+
+            if (data.includes(i)) {
+                res.push(1)
+            } else {
+                res.push(0.02)
+            }
+
+        }
+
+        let form = new FormData();
+
+        form.append('mask', res);
+
+        $.ajax({
+            type: "POST",
+            url: "/gen_epz",
+            processData: false,
+            contentType: false,
+            data: form,
+            success: function (d) {
+                let id = 'episode' + 'gen' + nb_gen;
+                nb_gen++;
+                megadata[id] = tofloat($.parseJSON(d));
+                $('#loadindep').replaceWith('<p> Gen </p>');
+                update_traj(megadata[id].positions, svg_traj, id)
+            }
+        });
+    }
+
+    function reverse_sel2mask(data) {
+
+
+        console.log(data);
+
+        $('#epilist').append('<div style="opacity:0.5;background-color: steelblue;" class="epbox" id="boxepgen' + nb_gen + '"><img id="loadindep" src="/static/assets/loading.gif"></div>');
+        let res = [];
+        for (let i = 0; i < megadata[episode].hiddens[0].length; i++) {
+
+            if (!data.includes(i)) {
+                res.push(1)
+            } else {
+                res.push(0.02)
+            }
+
+        }
+
+        let form = new FormData();
+
+        form.append('mask', res);
+
+        $.ajax({
+            type: "POST",
+            url: "/gen_epz",
+            processData: false,
+            contentType: false,
+            data: form,
+            success: function (d) {
+                let id = 'episode' + 'gen' + nb_gen;
+                nb_gen++;
+                megadata[id] = tofloat($.parseJSON(d));
+                $('#loadindep').replaceWith('<p> Gen </p>');
+                update_traj(megadata[id].positions, svg_traj, id)
+            }
+        });
+    }
 
 
     function saveHandle() {
-
-        let target = $('.selhigh');
-
-        if (!target.length) {
-            target = $('#delsel')
-        }
-
-        let id = '' + target.attr('id');
 
         let temp = hiddencrops[2].map((d) => {
             return old_res[d]
         });
 
-        if (sel[id]) {
-
-            if (hiddencrops[2].length)
-                sel[id] = sel['' + id].concat(temp);
-            sel['' + id].unique();
-        } else {
-            sel[id] = temp
-        }
+        addinAnn(antarger, temp)
 
     }
-
-    bod.on('click', '.seldel', function (e) {
-        let source = $(this).parent().parent().attr('id');
-
-
-        delete sel[source];
-
-        $(this).parent().parent().remove();
-
-    });
-
-    bod.on('click', '.selld', function (e) {
-
-        e.preventDefault();
-
-        let source = $(this).parent().parent().attr('id');
-
-        console.log(source);
-        console.log(sel[source]);
-
-        let temp = sel[source].map((d) => {
-            return old_res.indexOf(d)
-        });
-
-        $('#hiddensl').html(temp.length);
-
-        mega_draw_matrix(megadata[episode].hiddens, context_matrix, col, can_pad, memst, hiddencrops[1], temp, hiddencrops[0]);
-    });
 
 
     function updatenbh() {
@@ -2044,7 +1199,9 @@
                 .style('fill', 'none')
                 .attr('class', (i !== 1 ? 'annelbg ' : 'annelbg selcol'))
                 .attr('nb', i + 1)
-                .on('click', colclick);
+                .on('click', colclick)
+                .on('mouseover', colhov)
+                .on('mouseout', delhov);
 
 
             g.append("line")
@@ -2098,24 +1255,67 @@
 
 
             $(this).attr('class', cla);
+
+            place_rect(d3.select('#annotate'), antarger, true)
         }
 
     }
 
+    function colhov() {
+        let tnb = $(this).attr('nb');
+        place_rect(d3.select('#annotate'), tnb, false)
+
+    }
+
+    function delhov() {
+        $('.hovrect').remove();
+
+    }
+
+
     bod.on('click', '.annheader', function () {
+
 
         let bbox = $('#chann');
 
-        edit = true;
 
         let col = $(this).attr('nb');
 
-        bbox.css('display', 'block');
 
-        bbox.val(tempna[parseInt(col) - 1]);
+        if (col < 6) {
 
-        bbox.attr('nb', col)
+            edit = true;
+
+
+            bbox.css('display', 'block');
+
+            bbox.val(tempna[col - 1]);
+
+            bbox.attr('nb', col);
+
+            place_rect(d3.select('#annotate'), col, false)
+        }
+
     });
+
+
+    function place_rect(svg, col, flag) {
+
+        if (flag)
+            $('.clrect').remove();
+
+        $('.hovrect').remove();
+        svg.append('rect')
+            .attr('class', (flag ? 'clrect' : 'hovrect'))
+            .attr('x', '20')
+            .attr('y', '40')
+            .style('border', '0')
+            .style('fill', (flag ? 'rgb(238, 216, 129)' : 'rgb(254, 234, 169'))
+            .attr('width', '100')
+            .attr('height', '38')
+            .style('opacity', (flag ? '1' : '0.8'))
+            .style('transform', 'skewY(-13deg) skewX(-1.3deg) translate(' + (col - 2) * 40 + 'px,' + (105 + (col > 2 ? 10 : 10) * (col - 1)) + 'px) rotate(-72deg)').moveToBack()
+    }
 
 
     function addinAnn(col, elems) {
@@ -2205,6 +1405,7 @@
 
             if (megadata[episode].health.length - (i * 50) > 10) {
                 svg.append('text')
+                    .attr('font-family', 'Helvetica')
                     .attr('x', (scx(50 * i) + can_pad - (50 * i < 100 ? 7 : 15)) + 'px')
                     .attr('y', (35) + 'px')
                     .style('color', 'rgb(120, 120, 120)')
@@ -2224,6 +1425,7 @@
             .attr('class', 'tick');
 
         svg.append('text')
+            .attr('font-family', 'Helvetica')
             .attr('x', (scx(megadata[episode].health.length - 1) + can_pad - 15) + 'px')
             .attr('y', (35) + 'px')
             .style('color', 'rgb(120, 120, 120)')
@@ -2243,6 +1445,22 @@
                     .style('fill', 'rgb(160, 160, 160)')
                     .attr('class', 'tick')
         }
+    }
+
+
+    function seesel(col) {
+
+        mega_draw_matrix(megadata[episode].hiddens, context_matrix, col, 0, memst, tempar[col], hiddencrops[2], []);
+    }
+
+
+    function delsel(col) {
+
+
+        tempar[col] = [];
+
+        tempna[col] = 'Default'
+
 
     }
 
@@ -2259,7 +1477,7 @@
 
 
 <div class="container" style="visibility: hidden;overflow-y: hidden">
-    <div style="grid-column: 1;grid-template-rows: 1fr 1fr 1fr 1fr;grid-row-gap: 5px;position: relative;max-width: 640px">
+    <div style="grid-column: 1;grid-template-rows: 1fr 1fr 1fr 1fr;grid-row-gap: 5px;position: relative;max-width: 640px;min-width: 270px;min-height: 870px">
         <div style="display: grid;grid-row: 1;max-height: 30%;text-align: center;padding: 10px" id="input-cont">
             <p id="stepind" style="display: inline-block;top:12px;left:5%;position: absolute;opacity: 1 !important;z-index: 200;color: white;font-weight: 600">0</p>
             <svg id="distrib-svg" width="80" height="80" style="display: inline-block;top:16px;right:16px;position: absolute;background-color: white;opacity: 1 !important;z-index: 200">
@@ -2270,32 +1488,35 @@
 
 
             </div>
-            <div style="margin-top: 10px">
+            <div>
 
                 <div style="vertical-align: text-top;display: inline-block;color: #fff;z-index: 888;min-width: 5%;text-align: center;margin:5px" id="buttons">
                     <div>
-                        <button type="button" id="thong" class="btn btn-default btn-lg" onclick="backward()" style="padding: 2px;font-size:0.75rem;width: 30px" aria-label="Left Align">
-                            <span class="fa fa-arrow-left fa-lg" aria-hidden="true"></span>
-                        </button>
-                        <button type="button" id="auto" class="btn btn-default btn-lg" onclick="switchauto()" style="padding: 2px;font-size:0.75rem;width: 30px" aria-label="Left Align">
-                            <span class="fa fa-play fa-lg" aria-hidden="true"></span>
-                        </button>
-                        <button type="button" id="thing" class="btn btn-default btn-lg" onclick="forward()" style="padding: 2px;font-size:0.75rem;width: 30px" aria-label="Left Align">
-                            <span class="fa fa-arrow-right fa-lg" aria-hidden="true"></span>
-                        </button>
-
-                        <button type="button" id="res" class="btn btn-default btn-lg" onclick="reset()" style="padding: 2px;font-size:0.75rem;width: 30px" aria-label="Left Align">
-                            <span class="fa fa-repeat fa-lg" aria-hidden="true"></span>
-                        </button>
-
-                        <button type="button" id="compact" class="btn btn-default btn-lg" onclick="hcrop()" style="padding: 2px;font-size:0.75rem;width: 30px" aria-label="Left Align">
-                            <span class="fa fa-compress fa-lg" aria-hidden="true"></span>
-                        </button>
-                        <button type="button" id="salcon" class="btn btn-default btn-lg" style="padding: 2px;font-size:0.75rem;width: 30px" aria-label="Left Align">
+                        <button type="button" id="salcon" class="btn btn-default btn-lg" style="margin-right: 15px" aria-label="Left Align">
                             <i class="fa fa-adjust fa-lg"></i>
                         </button>
 
-                        <select id="sort-sel" class="btn" style="padding: 1px">
+                        <button type="button" id="thong" class="btn btn-default btn-lg" onclick="backward()" aria-label="Left Align">
+                            <span class="fa fa-arrow-left fa-lg" aria-hidden="true"></span>
+                        </button>
+                        <button type="button" id="auto" class="btn btn-default btn-lg" onclick="switchauto()" aria-label="Left Align">
+                            <span class="fa fa-play fa-lg" aria-hidden="true"></span>
+                        </button>
+                        <button type="button" id="thing" class="btn btn-default btn-lg" onclick="forward()" style="margin-right: 15px" aria-label="Left Align">
+                            <span class="fa fa-arrow-right fa-lg" aria-hidden="true"></span>
+                        </button>
+
+
+                        <button type="button" id="res" class="btn btn-default btn-lg" onclick="reset()" aria-label="Left Align">
+                            <span class="fa fa-repeat fa-lg" aria-hidden="true"></span>
+                        </button>
+
+                        <button type="button" id="compact" class="btn btn-default btn-lg" onclick="hcrop()" aria-label="Left Align">
+                            <span class="fa fa-compress fa-lg" aria-hidden="true"></span>
+                        </button>
+
+
+                        <select id="sort-sel" class="btn" style="padding: 4px;width: auto;font-weight: 700">
                             <option value="0">No sort</option>
                             <option value="1">Activation</option>
                             <option value="2">Change</option>
@@ -2306,8 +1527,6 @@
                         </select>
                     </div>
                 </div>
-
-
             </div>
         </div>
         <div style="grid-row: 2;text-align: center;height: 30%;">
@@ -2316,7 +1535,7 @@
             </svg>
         </div>
         <div style="grid-row: 3;text-align: center;height: 30%;margin-top: 2%">
-            <svg id="tsne" width="90%" height="80%" style="padding: 5px;">
+            <svg id="tsne" width="90%" height="80%" style="padding: 5px;cursor: crosshair">
 
             </svg>
 
@@ -2327,23 +1546,23 @@
                 <div id="epilist" style="text-align: center;overflow-x: auto">
 
                 </div>
-                <div>
-                    <!--<img class="plusep" style="height: 25px;width: auto;border: black 2px solid;padding: 2px;position: absolute;right: 5%;top:40%" src="/static/assets/001-plus-1.png">-->
-                </div>
             </div>
+
+
         </div>
     </div>
 
 
-    <div id='nb1' style="grid-column: 2;min-width: 720px;overflow-y: hidden">
+    <div id='nb1' style="padding-top:10px;grid-column: 2;min-width: 720px;overflow-y: hidden">
         <div style="height: 26px;width: 100%">
 
-            <button onclick="saveHandle()" type="button" class="btn btn-default btn-lg" style="float: right;margin-right: 10px;margin-top: 5px">Save</button>
+            <button onclick="saveHandle()" type="button" class="btn btn-default btn-lg" style="margin: 0;float: right;margin-right: 10px;font-weight: 700;width:auto;">Save</button>
 
 
             <div style="width: 80%;margin-top: 2%;display: inline-block;position: relative;margin-left:105px" id="timeline">
 
                 <output id="tooltip1" name="rangeVal">50</output>
+
                 <h3 style="position: relative;top:-45px;left:48%;width: 70px">Steps</h3>
             </div>
         </div>
@@ -2358,7 +1577,7 @@
             <canvas height="2850" width="24948" id="matrix-canvas" style="margin-left: 110px"></canvas>
 
 
-            <div style="float: right;margin-top: 54px;text-align: center">
+            <div style="float: right;margin-top: 36px;text-align: center">
                 <p id="hiddensl" style="width: 78%">
                     512
                 </p>
@@ -2377,13 +1596,10 @@
 
     </div>
 
-    <div style="grid-column: 3;text-align: center;position: relative">
-        <svg id="annotate" style="width: 90%;height: 80%;margin-top: 2px">
-
-
+    <div style="grid-column: 3;text-align: center;position: relative;padding-top: 10px;min-width: 240px">
+        <svg id="annotate" style="width: 240px;height: 80%;margin-top: 20px">
         </svg>
-
-
+        <input id="chann" type="text" maxlength="17" minlength="2" style="position: absolute;padding: 5px;left: 45px;top: 0;display: none">
     </div>
 
 
@@ -2394,6 +1610,7 @@
 
 
 </script>
-<input id="chann" type="text" maxlength="18" minlength="2" style="position: absolute;padding: 5px;right: 40px;top: 40px;display: none">
+
+
 </body>
 </html>

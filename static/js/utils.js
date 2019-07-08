@@ -47,6 +47,16 @@ d3.selection.prototype.moveToFront = function () {
     });
 };
 
+
+d3.selection.prototype.moveToBack = function () {
+    return this.each(function () {
+        var firstChild = this.parentNode.firstChild;
+        if (firstChild) {
+            this.parentNode.insertBefore(this, firstChild);
+        }
+    });
+};
+
 const average = arr => arr.reduce((p, c) => p + c, 0) / arr.length;
 
 function euclidian_dist(a, b) {
