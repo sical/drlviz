@@ -44,7 +44,7 @@ Once the server is launched, you should be able to access DRLViz at: http://loca
 
 To use DRLViz with your own data, you must first down setup a local instance of DRLViz as described in the previous section.
 
-Then, you should edit the file: data.json, to fill it with your own data. This data set is strutured to store episode per episodes, and then step per step across attributes. Thus, to reach the actions which occured at step 5 in episode0, one must use the following code: `data['episode0].actions[5]`. Each episode must set as root of the JSON, and their key name must start with "episode" concatened with its id (e.g. 'episode0', then, 'episode1' and so on ..). 
+Then, you should edit the file: data.json, to fill it with your own data. This data set is strutured to store episode per episodes, and then step per step across attributes. Thus, to reach the actions which occured at step 5 in episode0, one must use the following code: `data['episode0].actions[5]`. Each episode must be at the JSON's root, and their key name must start with "episode" concatened with their incremented id (e.g. 'episode0', then, 'episode1' and so on ..). 
 
 
 ```
