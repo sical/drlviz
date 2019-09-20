@@ -35,6 +35,6 @@ Open the downloaded directory and start any server. For demonstration sake we us
 python -m SimpleHTTPServer 8000
 ```
 
-You can now access DRLViz at: http://localhost:8000/.
+Once the server is launched, you should be able to access DRLViz at: http://localhost:8000/.
 
 
