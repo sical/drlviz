@@ -29,12 +29,11 @@ git clone https://github.com/sical/drlviz.git
 ``` 
 
 
-Open the downloaded directory and use any server. For demonstration sake we use: [SimpleHTTPServer](https://docs.python.org/2/library/simplehttpserver.html)
+Open the downloaded directory and start any server. For demonstration sake we used: [SimpleHTTPServer](https://docs.python.org/2/library/simplehttpserver.html)
 
 ```
 python -m SimpleHTTPServer 8000
 ```
-
-Where `8000` is the port. You can now access DRLViz at http://localhost:8000/.
+You can now access DRLViz at: http://localhost:8000/.
 
 
