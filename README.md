@@ -90,8 +90,8 @@ episode1: {...}
 
 If you find this usefull, consider citing the following:
 ```
-Theo Jaunet, Romain Vuillemot, Christian Wolf DRLViz: Understanding Decisions and Memory in Deep Reinforcement Learning
-url: http://arxiv.org/abs/1909.02982
+Theo Jaunet, Romain Vuillemot, Christian Wolf DRLViz: Understanding Decisions and Memory
+in Deep Reinforcement Learning url: http://arxiv.org/abs/1909.02982
 ```
 
 
