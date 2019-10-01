@@ -86,4 +86,19 @@ episode1: {...}
 
 ```
 
+## Citation
+
+If you find this usefull, consider citing the following:
+
+```
+@article{jaunet2019drlviz,
+    title={DRLViz: Understanding Decisions and Memory in Deep Reinforcement Learning},
+    author={Theo Jaunet and Romain Vuillemot and Christian Wolf},
+    year={2019},
+    eprint={1909.02982},
+    archivePrefix={arXiv},
+    primaryClass={cs.LG}
+}
+
+```
 
