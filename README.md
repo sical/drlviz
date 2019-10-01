@@ -89,6 +89,11 @@ episode1: {...}
 ## Citation
 
 If you find this usefull, consider citing the following:
+```
+Theo Jaunet, Romain Vuillemot, Christian Wolf DRLViz: Understanding Decisions and Memory in Deep Reinforcement Learning
+url: http://arxiv.org/abs/1909.02982
+```
+
 
 ```
 @article{jaunet2019drlviz,
@@ -97,7 +102,8 @@ If you find this usefull, consider citing the following:
     year={2019},
     eprint={1909.02982},
     archivePrefix={arXiv},
-    primaryClass={cs.LG}
+    primaryClass={cs.LG},
+    url={http://arxiv.org/abs/1909.02982}
 }
 
 ```
