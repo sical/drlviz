@@ -99,7 +99,7 @@ episode1: {...}
 
 ## Memory Reductions
 
-In order to produce your own memory reductions, you can can use the script [reduce.py](). Such a script, is designed to work on python >= 3.5 and linux, it requires some python dependencies you can install with the following command.
+In order to produce your own memory reductions, you can can use the script [reduce.py](https://github.com/sical/drlviz/blob/master/reduce.py). Such a script, is designed to work on python >= 3.5 and linux, it requires some python dependencies you can install with the following command.
 
 ```
 
