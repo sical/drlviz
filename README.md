@@ -44,7 +44,17 @@ Once the server is launched, you should be able to access DRLViz at: http://loca
 
 To use DRLViz with your own data, you must first down setup a local instance of DRLViz as described in the previous section.
 
-Then, you should edit the file: data.json, to fill it with your own data. This data set is strutured to store episode per episodes, and then step per step across attributes. Thus, to reach the actions which occured at step 5 in episode0, one must use the following code: `data['episode0].actions[5]`. Each episode must be at the JSON's root, and their key name must start with "episode" concatened with their incremented id (e.g. 'episode0', then, 'episode1' and so on ..). 
+Then, you can either:
+
+Change the line#39 in [index.html](https://github.com/sical/drlviz/blob/master/index.html) and add your on file as it follows: 
+
+```
+
+ let datafile = "result.json" // Change this to use your own dataset
+ 
+```
+
+Or you can edit the file: data.json, to fill it with your own data. This data set is strutured to store episode per episodes, and then step per step across attributes. Thus, to reach the actions which occured at step 5 in episode0, one must use the following code: `data['episode0].actions[5]`. Each episode must be at the JSON's root, and their key name must start with "episode" concatened with their incremented id (e.g. 'episode0', then, 'episode1' and so on ..). 
 
 
 ```
@@ -85,6 +95,20 @@ episode1: {...}
 
 
 ```
+
+
+## Memory Reductions
+
+In order to produce your own memory reductions, you can can use the script [reduce.py](). Such a script, is designed to work on python >= 3.5 and linux, it requires some python dependencies you can install with the following command.
+
+```
+
+pip install -r requirements.txt
+
+```
+
+This script allows you to select the memory order you want, and the number of elements to preserve. The outcome of this script is a file 'result.json' which you can then use in DRLViz.
+
 
 ## Citation
 
