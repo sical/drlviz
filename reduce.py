@@ -158,6 +158,7 @@ def tsne_1d_projection(n):
 
 
 def apply_oder(n, order):
+    assert n < 512, "n must be < 512"
     mask = remove_all()
 
     for i in range(n):
@@ -169,7 +170,7 @@ def apply_oder(n, order):
 if __name__ == '__main__':
     # mask = top(20)  # This line allows you to keep the top activated 20 elements
     # mask = change(20)  # This line allows you to keep the top changing 20 elements
-    mask = tsne_1d_projection(50)  # This line allows you to keep the top tsne_1d_projection 20 elements
+    mask = tsne_1d_projection(50)  # This line allows you to keep the top tsne_1d_projection 50 elements
     # mask = remove_all()  #This removes all elements.
 
     data = gen_classic(mask, "result.json")
