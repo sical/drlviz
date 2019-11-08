@@ -12,7 +12,7 @@ Authors: Theo Jaunet, Romain Vuillemot, Christian Wolf
 This repository contains the front-end of DRLViz, a visual analytics tool to explore the memory of agents trained with Deep Reinforcement learning.
 
 
-<img src="https://github.com/sical/drlviz/blob/master/screenshot%20(1).png">
+<img src="https://github.com/sical/drlviz/blob/master/teaser.png">
 
 
 ## Live Demo
@@ -86,4 +86,25 @@ episode1: {...}
 
 ```
 
+## Citation
+
+If you find this usefull, consider citing the following:
+```
+Theo Jaunet, Romain Vuillemot, Christian Wolf DRLViz: Understanding Decisions and Memory
+in Deep Reinforcement Learning url: http://arxiv.org/abs/1909.02982
+```
+
+
+```
+@article{jaunet2019drlviz,
+    title={DRLViz: Understanding Decisions and Memory in Deep Reinforcement Learning},
+    author={Theo Jaunet and Romain Vuillemot and Christian Wolf},
+    year={2019},
+    eprint={1909.02982},
+    archivePrefix={arXiv},
+    primaryClass={cs.LG},
+    url={http://arxiv.org/abs/1909.02982}
+}
+
+```
 
