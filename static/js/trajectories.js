@@ -33,8 +33,8 @@ function changeHighlight() {
 
 function draw_traj(data, svg, width, height) {
 
-    let mapx = (scenario === 'health_gathering_supreme' ? [0, 2000] : [200, 1200]);
-    let mapy = (scenario === 'health_gathering_supreme' ? [0, 2000] : [-600, 100]);
+    let mapx = [0, 2000];
+    let mapy = [0, 2000];
 
     traj_x = d3.scaleLinear().range([0, width]);
     traj_y = d3.scaleLinear().range([height, 0]);

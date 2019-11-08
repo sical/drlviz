@@ -2,9 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-     <meta name="author" content="Theo Jaunet, Romain Vuillemot and Christian Wolf">
-     <meta property="og:description" content="We built DRLViz, a novel Visual Analytics interface aimed at making Deep Reinforcement Learning (DRL) models more transparent and interpretable for experts. DRLViz exposes a trained agent’s memory using a set of interactive visualizations the user can overview and filter, to identify sub-sets of the memory involved in the agent’s decision."
-       <meta property="og:image" content="htps://sical.github.io/drlviz/screenshot%20(1).png">                                 
+    <meta name="author" content="Theo Jaunet, Romain Vuillemot and Christian Wolf">
+    <meta property="og:description"
+          content="We built DRLViz, a novel Visual Analytics interface aimed at making Deep Reinforcement Learning (DRL) models more transparent and interpretable for experts. DRLViz exposes a trained agent’s memory using a set of interactive visualizations the user can overview and filter, to identify sub-sets of the memory involved in the agent’s decision."
+    <meta property="og:image" content="htps://sical.github.io/drlviz/screenshot%20(1).png">
     <title>DRLViz</title>
 
     <script src="static/js/jquery.min.js"></script>
@@ -33,10 +34,16 @@
         let whichstep = "0";
         let scenario = "health_gathering_supreme";
         whichstep = parseInt(whichstep);
+
+
+        let datafile = "result.json" // Change this to use your own dataset
+
+
     </script>
 <body style="overflow-y: hidden">
 
 <script>
+
 
     let megadata;
     let colors = ["#3366cc", "#dc3912", "#ff9900", "#109618", "#990099", "#0099c6", "#dd4477", "#66aa00", "#b82e2e", "#316395", "#994499", "#22aa99", "#aaaa11", "#6633cc", "#e67300", "#8b0707", "#651067", "#329262", "#5574a6", "#3b3eac"];
@@ -514,7 +521,7 @@
         }
     }
 
-    d3.json("data.json")
+    d3.json(datafile)
         .on("progress", function (evt) {
             console.log(evt);
             var percentComplete = evt.loaded / (evt.lengthComputable ? evt.total : 27924281);
@@ -631,8 +638,6 @@
 
     function reportWindowSize() {
 
-
-        console.log('heu');
         let tbbox = svg_traj.node().getBoundingClientRect();
 
         svg_traj.selectAll('*').remove();
