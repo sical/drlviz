@@ -54,7 +54,7 @@ Change the line#39 in [index.html](https://github.com/sical/drlviz/blob/master/i
  
 ```
 
-Or you can edit the file: data.json, to fill it with your own data. This data set is strutured to store episode per episodes, and then step per step across attributes. Thus, to reach the actions which occured at step 5 in episode0, one must use the following code: `data['episode0].actions[5]`. Each episode must be at the JSON's root, and their key name must start with "episode" concatened with their incremented id (e.g. 'episode0', then, 'episode1' and so on ..). 
+Or you can edit the file: data.json, to fill it with your own data. This data set is strutured to store episode per episodes, and then step per step across attributes. Thus, to reach the actions which occured at step 5 in episode0, one must use the following code: `data['episode0'].actions[5]`. Each episode must be at the JSON's root, and their key name must start with "episode" concatened with their incremented id (e.g. 'episode0', then, 'episode1' and so on ..). 
 
 
 ```
