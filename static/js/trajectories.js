@@ -20,7 +20,7 @@ let line = d3.line()
         return traj_y(d[1]);
     });
 
-let myWorker = new Worker("/static/js/worker.js");
+let myWorker = new Worker("static/js/worker.js");
 
 
 function changeHighlight() {
@@ -180,7 +180,7 @@ function update_ts(svg) {
 function makeState(svg, data) {
 
     myWorker.terminate();
-    myWorker = new Worker("/static/js/worker.js");
+    myWorker = new Worker("static/js/worker.js");
 
     let svbbox = svg.node().getBoundingClientRect();
     ts_y = d3.scaleLinear().rangeRound([svbbox.height - 10, 0]);
