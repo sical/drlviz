@@ -46,15 +46,14 @@ To use DRLViz with your own data, you must first down setup a local instance of 
 
 Then, you can either:
 
-Change the line#64 in [main.html](https://github.com/sical/drlviz/blob/master/main.html) and add your on file as it follows: 
+Change line#64 in [main.html](https://github.com/sical/drlviz/blob/master/main.html) and add your on file as it follows: 
 
 ```
 
- let datafile = "result.json" // Change this to use your own dataset
+ let datafile = "mydata.json" // Change "mydata.json" with your own dataset
  
 ```
-
-Or you can edit the file: data.json, to fill it with your own data. This data set is strutured to store episode per episodes, and then step per step across attributes. Thus, to reach the actions which occured at step 5 in episode0, one must use the following code: `data['episode0'].actions[5]`. Each episode must be at the JSON's root, and their key name must start with "episode" concatened with their incremented id (e.g. 'episode0', then, 'episode1' and so on ..). 
+Each episode must be at the JSON's root, and their key name must start with "episode" concatened with their incremented id (e.g. 'episode0', then, 'episode1' and so on ..). Your file must contain attributes as presented bellow.
 
 
 ```
