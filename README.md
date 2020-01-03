@@ -46,7 +46,7 @@ To use DRLViz with your own data, you must first down setup a local instance of 
 
 Then, you can either:
 
-Change the line#39 in [index.html](https://github.com/sical/drlviz/blob/master/index.html) and add your on file as it follows: 
+Change the line#64 in [main.html](https://github.com/sical/drlviz/blob/master/main.html) and add your on file as it follows: 
 
 ```
 
