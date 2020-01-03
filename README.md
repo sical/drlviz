@@ -14,6 +14,8 @@ This repository contains the front-end of DRLViz, a visual analytics tool to exp
 
 <img src="https://github.com/sical/drlviz/blob/master/static/assets/item.png" heigh="400">
 
+![teaser](static/assets/item.png=x400)
+
 
 ## Live Demo
 (Designed to work on Google Chrome, at 1920*1080)
