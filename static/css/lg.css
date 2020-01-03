@@ -25,6 +25,19 @@ h3, img, i, p, button, span, h2, div, text {
     outline: none
 }
 
+.timelienll {
+    stroke: #dadada;
+    stroke-width: 0.5px;
+}
+.timecl{
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+.timeclsel{
+    fill: #333333;
+}
+
 .epbox {
     width: 50px;
     height: 50px;

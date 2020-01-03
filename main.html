@@ -1,0 +1,1812 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="author" content="Theo Jaunet, Romain Vuillemot and Christian Wolf">
+    <meta property="og:description"
+          content="We built DRLViz, a novel Visual Analytics interface aimed at making Deep Reinforcement Learning (DRL) models more transparent and interpretable for experts. DRLViz exposes a trained agent’s memory using a set of interactive visualizations the user can overview and filter, to identify sub-sets of the memory involved in the agent’s decision."
+    <meta property="og:image" content="htps://sical.github.io/drlviz/screenshot%20(1).png">
+    <title>DRLViz</title>
+
+    <script src="static/js/jquery.min.js"></script>
+
+
+    <script src="https://d3js.org/d3.v4.min.js"></script>
+    <script src="static/js/utils.js"></script>
+    <script src="static/js/metric.js"></script>
+    <script src="static/js/matrix.js"></script>
+    <script src="static/js/matrixV.js"></script>
+    <script src="static/js/distribution.js"></script>
+    <script src="static/js/trajectories.js"></script>
+    <script src="static/js/episodeHandler.js"></script>
+    <script src="static/js/timeline.js"></script>
+    <script src="static/js/draghandler.js"></script>
+    <script src="static/js/d3-lasso.min.js"></script>
+    <script src="static/js/tsne.js"></script>
+
+    <link href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet"
+          integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+
+    <link href="static/css/lg.css" rel="stylesheet"/>
+
+    <script>
+
+        let url = new URL(window.location);
+        let c = url.searchParams.get("scenario");
+        let scenario = "health_gathering_supreme";
+
+        console.log(c);
+
+
+        switch (c) {
+            case "1":
+                scenario = "health_gathering_supreme";
+                break;
+            case "2":
+                scenario = "arnold";
+                break;
+            case "3":
+                scenario = "offi_kitem";
+                break;
+            case "4":
+                scenario = "two_col";
+                break;
+        }
+
+
+        let episode = "episode0";
+        let whichstep = "0";
+
+
+        whichstep = parseInt(whichstep);
+
+
+        let datafile = 'data/' + scenario + ".json" // Change this to use your own dataset
+
+
+    </script>
+<body style="overflow-y: hidden;max-width: 1800px;max-height: 1000px;text-align: center;margin: auto ">
+
+<script>
+
+    let megadata = {};
+    let colors = ["#3366cc", "#dc3912", "#ff9900", "#109618", "#990099", "#0099c6", "#dd4477", "#66aa00", "#b82e2e", "#316395", "#994499", "#22aa99", "#aaaa11", "#6633cc", "#e67300", "#8b0707", "#651067", "#329262", "#5574a6", "#3b3eac"];
+    let colar = [['#2266a6', '#effce5', '#bf6b09']];
+    let col = d3.scaleLinear().domain([-1, 0, 1]).range(colar[0]).interpolate(d3.interpolateHcl);
+    let auto = false;
+    let keymap = {};
+    let nb_ep = 1;
+    let nb_gen = 0;
+    let nbload = 1;
+    let nbgen = 0;
+    let recording = false;
+    let bunch;
+    let sw;
+    let combtype = "0";
+    let edit = false;
+    let can_pad = 22;
+    let opval = 1;
+    let twidth;
+    let memst = 60;
+    let hiddencrops = [[], [], []];
+    let compact = false;
+    let sortype = "0";
+    let ratio;
+    let svg_traj, svg_tsne, svg_col1, svg_timelien, canvas_matrix, context_matrix;
+    let sel = {'delsel': []};
+    let selnb = 0;
+    let tempar = [[], [12, 381, 500, 496, 485], [421, 161, 168, 31], [108, 266, 332], [220], [], []];
+    let tempna = ['HP in FoV', 'Directions', 'No HP', 'Health', 'Misc'];
+
+    if (scenario !== 'health_gathering_supreme') {
+        tempar = [[], [17, 16, 4, 12, 0, 18, 11, 7, 15, 19, 30, 3, 5, 8, 31, 25], [17, 16, 4, 12, 0, 18, 11, 7], [8, 29, 12, 25, 11, 7, 15, 24, 19, 3, 14, 22, 20, 30, 2, 13], [8, 29, 12, 25, 11, 7, 15, 24, 21, 5], [], []];
+        tempna = ['Group 1', 'Group 2', 'Group 3', 'Group 4', 'Group 5'];
+    }
+    let antarger = 1;
+
+    let obs_width, obs_height;
+
+
+    let lasso_start = function () {
+        lasso.items()
+            .attr("r", 3.5)
+            .classed("not_possible", true)
+            .classed("selected", false);
+    };
+
+    let lasso_draw = function () {
+
+        lasso.possibleItems()
+            .classed("not_possible", false)
+            .classed("possible", true);
+
+        lasso.notPossibleItems()
+            .classed("not_possible", true)
+            .classed("possible", false);
+    };
+
+    let lasso_end = function () {
+        lasso.items()
+            .classed("not_possible", false)
+            .classed("possible", false);
+
+        lasso.selectedItems()
+            .classed("selected", true)
+            .attr("r", 7);
+
+        lasso.selectedItems();
+        lasso.notSelectedItems()
+            .attr("r", 3.5);
+
+
+        let tot = lasso.selectedItems()._groups[0].map((d) => {
+            return parseInt(d.getAttribute('num'))
+        });
+
+        let sqs = steps2sqs(tot);
+
+        d3.selectAll('.recthf').remove();
+        d3.selectAll('.txthf').remove();
+        sqs2rule(svg_timelien, 2, sqs, 'Lasso', 'hf');
+
+
+        if (combtype === "0") {
+            hiddencrops[0] = sqs
+
+
+        } else if (hiddencrops[0].length !== 0) {
+
+            hiddencrops[0] = match(hiddencrops[0], sqs)
+        } else {
+            hiddencrops[0] = sqs
+        }
+
+
+        mega_draw_matrix(megadata[episode].hiddens, context_matrix, col, can_pad, memst, hiddencrops[1], hiddencrops[2], hiddencrops[0]);
+    };
+
+
+    function steps2sqs(array) {
+        let sqs = [];
+        let temp = -1;
+        for (let i = 0; i < array.length; i++) {
+
+            if (temp === -1) {
+
+                temp = array[i]
+            } else if (array[i] - array[i - 1] !== 1) { //TODO: Is it always sorted?
+                if (temp !== array[i - 1]) {
+                    sqs.push([temp, array[i - 1]])
+                } else {
+                    sqs.push([(temp > 0 ? temp - 1 : 0), array[i - 1]])
+                }
+                temp = -1
+            }
+        }
+        if (temp !== -1) {
+            sqs.push([temp, array[array.length - 1]])
+        }
+
+        return sqs;
+    }
+
+
+    function sqs2rule(svg, nb, activs, name, id) {
+
+    }
+
+
+    let lasso;
+
+    let bod = $('body');
+
+    bod.on('click', '.epbox', function () {
+        $('.epbox').css('opacity', '0.5');
+        $(this).css('opacity', '1');
+        let tepisode = 'episode' + $(this).attr('id').substring(5);
+        switchep(megadata, tepisode);
+        hard_update()
+    });
+
+    bod.on('click', '.timecl', function () {
+
+        let cr = $(this);
+        let key = cr.attr('maur');
+
+
+        console.log(key);
+
+        combtype = cr.attr('fltype');
+
+        if (combtype === "0") {
+            console.log('Heyy');
+            let tre = $('#timelien .timeclsel');
+
+
+            for (let i = 0; i < tre.length; i++) {
+                tre[i].classList.remove('timeclsel');
+            }
+
+        }
+
+
+        this.classList.add('timeclsel');
+
+        if (abstr3[key].length < megadata[episode].health.length - 10) {
+
+            if (combtype === "0") {
+
+                hiddencrops[0] = abstr3[key];
+
+
+            } else if (hiddencrops[0].length !== 0) {
+                hiddencrops[0] = match(hiddencrops[0], abstr3[key])
+            } else {
+                hiddencrops[0] = abstr3[key];
+            }
+            mega_draw_matrix(megadata[episode].hiddens, context_matrix, col, can_pad, memst, hiddencrops[1], hiddencrops[2], hiddencrops[0]);
+        }
+
+    });
+
+
+    bod.on('click', '.timeclsel', function () {
+
+
+    });
+
+    bod.on('click', '.plusep', async function () {
+        if (nbload < (scenario === 'my_way_home' ? 43 : 9999)) {
+            let tnep = nbload;
+            let tiep = nb_ep;
+            nb_ep++;
+            nbload++;
+
+            $('#epilist').append('<div style="opacity:0.5;background-color: ' + colors[tiep] + ';" class="epbox" id="boxep' + (tiep) + '"><img id="loadindep" src="/static/assets/loading.gif"></div>');
+
+            $.ajax({
+                type: "GET",
+                url: "/loaddat/episode" + tnep,
+                success: function (d) {
+
+
+                    let id = 'episode' + (tiep);
+                    megadata[id] = tofloat($.parseJSON(d));
+                    $('#loadindep').replaceWith('<p> ' + (tnep) + ' </p>');
+                    update_traj(megadata[id].positions, svg_traj, id)
+                }
+            });
+        }
+
+    });
+
+    function hard_update() {
+
+        doTicks();
+
+        cw = ((twidth - 6) * ratio) / (megadata[episode].health.length);
+        let ctx = context_matrix;
+        ctx.clearRect(0, 0, 99999, 12000);
+        mega_draw_matrix(megadata[episode].hiddens, ctx, col, 0, memst, [], hiddencrops[2], []);
+        draw_metrics(megadata[episode], ctx, 0, 915);
+
+        if (episode !== 'all' || nb_ep <= 3)
+            makeState(svg_tsne, megadata[episode].hiddens);
+
+        maketime();
+
+        timeline_init(megadata[episode], twidth);
+
+
+        console.log(whichstep);
+        update_line(whichstep);
+
+
+        make_slit(megadata[episode].inputs, [[180, 100], [220, 225]]);
+        hiddencrops[0] = [];
+
+        lasso = d3.lasso()
+            .closePathSelect(true)
+            .closePathDistance(100)
+            .items(d3.selectAll('.perst'))
+            .targetArea(svg_tsne)
+            .on("start", lasso_start)
+            .on("draw", lasso_draw)
+            .on("end", lasso_end);
+
+
+        svg_tsne.call(lasso);
+
+        update_step(whichstep);
+    }
+
+    function fastf() {
+
+        if (hiddencrops[0].length > 0) {
+
+            if (whichstep < hiddencrops[0][0][0]) {
+                whichstep = hiddencrops[0][0][0];
+                update_step(whichstep);
+                update_line(whichstep)
+            } else {
+
+                for (let i = 0; i < hiddencrops[0].length; i++) {
+
+                    if (whichstep >= hiddencrops[0][i][0] && whichstep <= hiddencrops[0][i][1]) {
+
+                        if (i < hiddencrops[0].length - 1) {
+                            whichstep = hiddencrops[0][i + 1][0];
+                            update_step(whichstep);
+                            update_line(whichstep);
+                        } else {
+                            whichstep = hiddencrops[0][i][1];
+                            update_step(whichstep);
+                            update_line(whichstep);
+                        }
+                        break;
+                    } else if (i < hiddencrops[0].length - 1) {
+                        if (whichstep >= hiddencrops[0][i][1] && whichstep <= hiddencrops[0][i + 1][0]) {
+                            whichstep = hiddencrops[0][i + 1][0];
+                            update_step(whichstep);
+                            update_line(whichstep);
+                        }
+                    }
+                }
+            }
+        }
+        maketime();
+    }
+
+    function fastb() {
+
+        if (hiddencrops[0].length > 0) {
+
+            if (whichstep > hiddencrops[0][hiddencrops[0].length - 1][1]) {
+                whichstep = hiddencrops[0][hiddencrops[0].length - 1][0];
+                update_step(whichstep);
+                update_line(whichstep)
+            } else {
+
+                for (let i = 0; i < hiddencrops[0].length; i++) {
+
+                    if (whichstep >= hiddencrops[0][i][0] && whichstep <= hiddencrops[0][i][1]) {
+
+                        if (i > 0) {
+                            whichstep = hiddencrops[0][i - 1][0];
+                            update_step(whichstep);
+                            update_line(whichstep);
+                        } else {
+                            whichstep = hiddencrops[0][i][0];
+                            update_step(whichstep);
+                            update_line(whichstep);
+                        }
+                    } else if (i > 0) {
+                        if (whichstep <= hiddencrops[0][i][0] && whichstep >= hiddencrops[0][i - 1][1]) {
+                            whichstep = hiddencrops[0][i - 1][0];
+                            update_step(whichstep);
+                            update_line(whichstep);
+                        }
+                    }
+                }
+            }
+        }
+        maketime();
+    }
+
+    function forward() {
+
+        if (megadata[episode].actions[whichstep + 1]) {
+            whichstep++;
+            update_step(whichstep);
+            update_line(whichstep);
+            maketime();
+        } else if (auto) {
+            switchauto()
+        }
+    }
+
+    function play() {
+        if (auto)
+            forward()
+    }
+
+
+    function backward() {
+
+        if (megadata[episode].actions[whichstep - 1]) {
+            whichstep--;
+            update_step(whichstep);
+            update_line(whichstep);
+            maketime();
+        }
+    }
+
+    function update_line(step) {
+
+        let scx = d3.scaleLinear().domain([0, megadata[episode].health.length - 1]).range([0, twidth - 6]);
+        if (step >= 0 && step <= megadata[episode].health.length - 1) {
+            d3.selectAll('.tl')
+                .attr("transform", () => "translate(" + (scx(step)) + ",0)");
+        }
+
+    }
+
+    onkeydown = function (e) {
+        e = e || event;
+        keymap[e.keyCode] = e.type === 'keydown';
+        if (!edit) {
+            if (keymap[16]) { // arrowRight
+                if (keymap[39]) {
+                    e.preventDefault();
+
+                    fastf();
+
+                }
+                if (keymap[37]) {
+                    e.preventDefault();
+                    fastb();
+                }
+            } else if (keymap[39]) { // arrowRight
+                if (keymap[16]) {
+                    e.preventDefault();
+
+                    fastf();
+                } else {
+                    e.preventDefault();
+
+                    forward()
+                }
+            } else if (keymap[37]) { //arrow left
+                if (keymap[16]) {
+                    e.preventDefault();
+
+                    fastb();
+                } else {
+                    e.preventDefault();
+
+                    backward()
+                }
+            } else if (keymap[32]) { // space
+                e.preventDefault();
+
+                switchauto();
+            } else if (keymap[67]) { // c
+                hcrop()
+            } else if (keymap[82]) { // r
+
+                let elems = tempar[antarger];
+
+
+            } else if (keymap[84]) { // t
+
+                let elems = tempar[antarger];
+
+                reverse_sel2mask(elems)
+            } else if (keymap[77]) { // m
+
+                if (episode === 'all') {
+
+                    switchep(megadata, "episode0");
+                    hard_update()
+                } else {
+
+                    megamerge();
+                    hard_update()
+
+                }
+
+            } else if (keymap[83]) { // s
+                sortype = '' + (parseInt(sortype) + 1 % 7);
+                document.getElementById("sort-sel").selectedIndex = parseInt(sortype);
+                mega_draw_matrix(megadata[episode].hiddens, context_matrix, col, can_pad, memst, hiddencrops[1], hiddencrops[2], hiddencrops[0]);
+
+            }
+            if (keymap[17]) {  // ctrl + shift + a
+                if (keymap[16])
+                    if (keymap[65])
+                        switchscen()
+            } else if (keymap[187] || keymap[107]) { // +
+
+                $('.plusep').trigger('click')
+            }
+        } else {
+            if (keymap[13]) {
+
+                let bbox = $('#chann');
+                let col = bbox.attr('nb');
+                tempna[col - 1] = bbox.val();
+
+                bbox.css('display', 'none');
+
+                d3.selectAll('.annheader[nb="' + col + '"]').text(bbox.val())
+
+                edit = false;
+            }
+        }
+    }
+    ;
+
+
+    onkeyup = function (e) {
+        if (e.keyCode in keymap) {
+            keymap[e.keyCode] = false;
+        }
+    };
+
+
+    function switchauto() {
+
+        auto = !auto;
+        let sp = $('#auto span');
+
+        if (auto) {
+            sp.removeClass('fa-play');
+            sp.addClass('fa-pause')
+        } else {
+            sp.removeClass('fa-pause');
+            sp.addClass('fa-play')
+        }
+
+    }
+
+    function switchscen() {
+        if (scenario === 'health_gathering_supreme') {
+
+            $.ajax({
+                type: "GET",
+                url: "/change_scenario/my_way_home",
+                processData: false,
+                contentType: false,
+                success: function (d) {
+                    document.location.reload(true);
+                }
+            })
+        } else {
+
+
+            $.ajax({
+                type: "GET",
+                url: "/change_scenario/health_gathering_supreme",
+                processData: false,
+                contentType: false,
+                success: function (d) {
+                    document.location.reload(true);
+                }
+            })
+        }
+    }
+
+    d3.json(datafile)
+        .on("progress", function (evt) {
+            console.log(evt);
+            var percentComplete = evt.loaded / (evt.lengthComputable ? evt.total : 27924281);
+            $('.progress').css({
+                width: percentComplete * 100 + '%'
+            });
+            if (percentComplete > 0.98) {
+                console.log(evt.loaded);
+                $('.progress').css({
+                    width: 100 + '%'
+                });
+                $('.progress').addClass('hide');
+                $('#loadall').remove()
+            }
+        })
+        .mimeType("application/json")
+        .get(function (data) {
+
+            megadata[episode] = data;
+
+            svg_traj = d3.select('#trajs');
+            svg_tsne = d3.select('#tsne');
+            svg_col1 = d3.select('#col1svg');
+            canvas_matrix = d3.select('#matrix-canvas');
+
+            let theight = $(window).height() * 0.97 - 300;
+            //235
+            twidth = $('#matrix-canvas').parent().width() - 255;
+
+
+            $('#col1svg').css('width', (twidth + 28) + 'px');
+
+            $('#timeline').css('width', (twidth) + 'px');
+
+            canvas_matrix.style('height', theight + 'px');
+            canvas_matrix.style('width', twidth + 'px');
+
+            context_matrix = canvas_matrix.node().getContext('2d');
+            place_svg($('#col1svg'), $('#nb1').width());
+
+
+            context_matrix.scale(3, 3);
+            // megadata = $.parseJSON(d);
+            megadata[episode] = tofloat(megadata[episode]);
+            bunch = megadata[episode].hiddens[0].length;
+            $('.hiddensl').html('' + bunch);
+
+
+            ratio = (24948 / twidth) / 3;
+
+            cw = ((twidth - 6) * ratio) / (megadata[episode].health.length);
+
+
+            let rest = (theight * 542) / 685;
+            d3.select('#currhidd').style('height', rest + 15);
+            ve_init_rows(d3.select('#currhidd'), megadata[episode].hiddens[whichstep], rest);
+
+            mega_draw_matrix(megadata[episode].hiddens, context_matrix, col, 0, memst, [], [], []);
+
+            draw_metrics(megadata[episode], context_matrix, 0, 915);
+            init_svg(can_pad, 5, $('#col1svg').height());
+            draw_obs();
+
+            let tbbox = svg_traj.node().getBoundingClientRect();
+            maketime();
+            draw_traj(megadata, svg_traj, tbbox.width - 10, tbbox.height - 10);
+            makeState(svg_tsne, megadata[episode].hiddens);
+            inieplist();
+            draw_line(megadata[episode].probabilities[whichstep], d3.select('#distrib-svg'), 80, 80);
+            setInterval(play, 145);
+            timeline_init(megadata[episode], twidth);
+            $('.container').css('visibility', '');
+
+            dragElement(document.getElementById('timelien'));
+
+
+            lasso = d3.lasso()
+                .closePathSelect(true)
+                .closePathDistance(100)
+                .items(d3.selectAll('.perst'))
+                .targetArea(svg_tsne)
+                .on("start", lasso_start)
+                .on("draw", lasso_draw)
+                .on("end", lasso_end);
+            svg_tsne.call(lasso);
+
+
+            svg_traj.append("g")
+                .attr("class", "brush")
+                .call(d3.brush().extent([[0, 0], [tbbox.width, tbbox.height]])
+                    .on('brush', traj_brushmove)
+                    .on('end', traj_brushend)
+                );
+
+            let svg_inp = d3.select('#slit_sel');
+
+
+            draw_agent_path(svg_traj, megadata[episode].positions[whichstep], megadata[episode].orientations[whichstep]);
+
+
+            d3.select('#currhidd').append("g")
+                .attr("class", "brush")
+                .call(d3.brushY().extent([[45, 10], [70, rest + 10]])
+                    .on('brush', ve_brushmove)
+                    .on('end', ve_brushend)
+                );
+
+            intit_annot(d3.select('#annotate'));
+
+            let temp = new Image;
+            temp.onload = function () {
+                obs_width = temp.width;
+                obs_height = temp.height;
+                make_slit(megadata[episode].inputs, [[obs_width / 2, 0], [1, obs_height]]);
+                tbbox = d3.select('#input').node().getBoundingClientRect();
+                svg_inp.append("g")
+                    .attr("class", "brush")
+                    .call(d3.brush().extent([[0, 0], [tbbox.width, tbbox.height - 3]])
+                        .on('end', slit_go)
+                    );
+
+            }
+
+
+            temp.src = "data:image/jpeg;base64," + megadata[episode].inputs[0];
+            $('.progress').addClass('hide');
+            $('#loadall').remove()
+        })
+
+    function reportWindowSize() {
+
+
+        console.log('heu');
+
+        let tbbox = svg_traj.node().getBoundingClientRect();
+
+        svg_traj.selectAll('*').remove();
+        draw_traj(megadata, svg_traj, tbbox.width - 10, tbbox.height - 10);
+        update_ts(svg_tsne);
+        drawCircles(d3.select('#lay'), Y);
+
+
+        let theight = $(window).height() * 0.97 - 300;
+//235
+        twidth = $('#matrix-canvas').parent().width() - 255;
+
+
+        $('#col1svg').css('width', (twidth + 28) + 'px');
+
+        $('#timeline').css('width', (twidth) + 'px');
+
+        canvas_matrix.style('height', theight + 'px');
+        canvas_matrix.style('width', twidth + 'px');
+
+
+        let rest = (theight * 542) / 685;
+        d3.select('#currhidd').style('height', rest + 15);
+
+        doTicks();
+
+
+        svg_col1.selectAll('.tl').attr('height', $('#col1svg').height());
+        svg_col1.selectAll('.tl').attr('y2', $('#col1svg').height());
+
+
+        ve_resize(d3.select('#currhidd'), rest + 15)
+        //TODO: VE MATRIX
+
+        // TODO: Annotate
+    }
+
+
+    function activ2sq(activs, threshold) {
+
+        let sqs = [];
+        let sq = [];
+
+        for (let i = 0; i < activs.length; i++) {
+
+            if (activs[i] && sq.length === 0) {
+                sq.push(i)
+            } else if (!activs[i] && sq.length === 1) {
+
+                if (i - sq[0] >= threshold) {
+                    sq.push(i - 1);
+                    sqs.push(sq.slice());
+                    sq = []
+                }
+            } else if (sq.length === 1 && i === activs.length - 1) {
+                sq.push(i - 1);
+                sqs.push(sq.slice());
+                sq = []
+            }
+        }
+
+        return sqs;
+
+    }
+
+    function place_svg(svg, divsize) {
+
+        sw = svg.width();
+
+        if (divsize > sw) {
+            svg.css('margin-left', 50 + 'px');
+        }
+
+    }
+
+
+    function draw_metrics(data, context, offx, offy) {
+        stream_acts(data.probabilities, context, offx, offy)
+    }
+
+
+    function init_svg(offx, offy, height) {
+
+        let scx = d3.scaleLinear().domain([0, megadata[episode].health.length - 1]).range([0, twidth - 6]);
+
+        let svg = svg_col1;
+
+
+        svg.append("g")
+            .attr("class", "brush")
+            .call(d3.brushX()
+                .extent([[offx, 0], [twidth + 6, height]])
+                .on('brush', brushmove)
+                .on('end', brushend)
+            );
+
+
+        let data = [
+            {
+                'x1': offx + scx(whichstep) - 20,
+                'y1': 0 + offy,
+                'x2': offx + scx(whichstep) - 20,
+                'y2': height + offy
+            },
+            {
+                'x1': offx + scx(whichstep),
+                'y1': 0 + offy - 2,
+                'x2': offx + scx(whichstep),
+                'y2': height + offy
+            },
+            {
+                'x1': offx + scx(whichstep) + 20,
+                'y1': 0 + offy,
+                'x2': offx + scx(whichstep) + 20,
+                'y2': height + offy
+            }
+        ];
+
+
+        let drag_behavior = d3.drag()
+            .on("start", dragstarted)
+            .on("drag", dragged);
+
+
+        let lines = svg
+            .selectAll('line')
+            .data(data)
+            .enter()
+            .append('line')
+            .attr('class', 'tl')
+            .attr('x1', function (d) {
+                return d.x1
+            })
+            .attr('x2', function (d) {
+                return d.x2
+            })
+            .attr('y1', function (d) {
+                return d.y1
+            })
+            .attr('y2', function (d) {
+                return d.y2
+            })
+            .attr('stroke-dasharray', function (d, i) {
+                if (i !== 1) {
+                    return '5,5'
+                } else {
+                    return ''
+                }
+            }).call(drag_behavior);
+
+        test_rect(svg, offx, offy, scx(whichstep) - 20, scx(whichstep) + 20, height)
+        doTicks();
+
+
+    }
+
+
+    function test_rect(svg, offx, offy, anc1, anc2, height) {
+
+        let drag_behavior = d3.drag()
+            .on("start", dragstarted)
+            .on("drag", dragged);
+
+        svg.append('rect')
+            .attr('class', 'tl')
+            .attr('x', offx + anc1)
+            .attr('y', offy)
+            .attr('width', offx + anc2)
+            .attr('height', offy + height)
+            .attr('fill', 'rgba(51, 81, 86, 0.05)')
+            .call(drag_behavior)
+
+
+    }
+
+    function dragstarted() {
+        d3.select(this).raise();
+    }
+
+    function dragged(shape) {
+
+
+        //TODO: fix index issues
+
+        let scx = d3.scaleLinear().domain([0, megadata[episode].health.length - 1]).range([0, twidth - 6]);
+        let dx = d3.event.sourceEvent.offsetX;
+
+
+        let step = Math.round(scx.invert(dx));
+        //console.log(step + ' -- -- ' + (dx));
+
+        if (step > 0 && step < megadata[episode].actions.length) {
+            update_step(step);
+            maketime();
+            d3.selectAll('.tl')
+                .attr("transform", shape => "translate(" + (dx) + ",0)");
+        }
+    }
+
+
+    function update_step(step) {
+        whichstep = step;
+        draw_obs();
+        draw_agent_path(svg_traj, megadata[episode].positions[step], megadata[episode].orientations[step]);
+        $('#stepind').html(step);
+        updatehps(svg_traj, megadata[episode].fov, step);
+        update_bars(megadata[episode].probabilities[whichstep], d3.select('#distrib-svg'), 80, 80, megadata[episode].actions[whichstep]);
+        find_cur_dot(svg_tsne, step);
+        //ve_update(d3.select('#currhidd'), megadata[episode].hiddens[whichstep])
+
+    }
+
+    function draw_obs() {
+
+        $("#input").html("").append(toImage(megadata[episode].inputs[(whichstep > 0 ? whichstep : whichstep)], 'display-img', 'opacity:' + opval + ';'));
+        if (megadata[episode].saliencies !== undefined)
+            if (megadata[episode].saliencies.length > 0)
+                $("#input").css('background-image', "url(data:image/jpeg;base64," + megadata[episode].saliencies[(whichstep > 0 ? whichstep : whichstep)] + ')');
+
+    }
+
+
+    function ve_brushmove() {
+
+        let br = $("#currhidd .selection");
+
+        let bh = parseFloat(br.attr("height"));
+        let by = parseFloat(br.attr("y"));
+
+        let temp = [];
+        let tr = ve_rows.filter(function (d) {
+            let offy = this.getAttribute('y');
+            if (offy >= by && offy <= by + bh) {
+                temp.push([parseInt(this.getAttribute('nb')), parseInt(this.getAttribute('order'))]);
+                return true
+            }
+        });
+
+
+        temp.sort((a, b) => a[1] - b[1]);
+
+        hiddencrops[2] = temp.map(d => d[1]);
+
+        updatenbh();
+
+        mega_draw_matrix(megadata[episode].hiddens, context_matrix, col, can_pad, memst, hiddencrops[1], hiddencrops[2], hiddencrops[0]);
+
+
+    }
+
+
+    function ve_brushend() {
+        let br = $("#currhidd .selection");
+
+
+        if (br.css('display') === 'none') {
+            hiddencrops[2] = [];
+            $('#hiddensl').html('' + megadata[episode].hiddens[0].length);
+            mega_draw_matrix(megadata[episode].hiddens, context_matrix, col, can_pad, memst, hiddencrops[1], hiddencrops[2], hiddencrops[0]);
+
+        }
+
+    }
+
+    function traj_brushend() {
+        let br = $("#trajs .selection");
+
+        if (br.css('display') === 'none') {
+            hiddencrops[0] = [];
+            mega_draw_matrix(megadata[episode].hiddens, context_matrix, col, can_pad, memst, hiddencrops[1], hiddencrops[2], hiddencrops[0]);
+
+        }
+    }
+
+    function traj_brushmove() {
+        let br = $("#trajs .selection");
+
+        let bw = parseFloat(br.attr("width"));
+        let bh = parseFloat(br.attr("height"));
+        let bx = parseFloat(br.attr("x"));
+        let by = parseFloat(br.attr("y"));
+
+        let csteps = [];
+
+        for (let i = 0; i < megadata[episode].positions.length; i++) {
+
+            let currpos = megadata[episode].positions[i];
+
+            if (traj_x(currpos[0]) > bx && traj_x(currpos[0]) < bx + bw) {
+                if (traj_y(currpos[1]) > by && traj_y(currpos[1]) < by + bh) {
+                    csteps.push(i)
+                }
+            }
+        }
+        let sqs = steps2sqs(csteps);
+
+
+        d3.selectAll('.recthf').remove();
+        d3.selectAll('.txthf').remove();
+
+        sqs2rule(svg_timelien, 2, sqs, 'Traj Brush', 'hf');
+
+        if (combtype === "0") {
+            hiddencrops[0] = sqs
+
+
+        } else if (hiddencrops[0].length !== 0) {
+            hiddencrops[0] = match(hiddencrops[0], sqs)
+        } else {
+            hiddencrops[0] = sqs
+        }
+
+        mega_draw_matrix(megadata[episode].hiddens, context_matrix, col, can_pad, memst, hiddencrops[1], hiddencrops[2], hiddencrops[0]);
+
+    }
+
+    function brushend() {
+        let br = $("#col1svg .selection");
+        if (br.css('display') === 'none') {
+            hiddencrops[0] = [];
+
+            mega_draw_matrix(megadata[episode].hiddens, context_matrix, col, can_pad, memst, hiddencrops[1], hiddencrops[2], []);
+        } else {
+
+            let scx = d3.scaleLinear().domain([0, megadata[episode].health.length - 1]).range([0, twidth - 10]);
+            let x = parseFloat(br.css('x').slice(0, -2));
+            let width = parseFloat(br.css('width').slice(0, -2));
+
+            let sqs = [[Math.max(0, Math.round(scx.invert(x)) - 10), Math.min(Math.round(scx.invert(x + width)) - 10, megadata[episode].health.length - 1)]];
+
+            if (combtype === "0") {
+                hiddencrops[0] = sqs
+
+
+            } else if (hiddencrops[0].length !== 0) {
+
+                hiddencrops[0] = match(hiddencrops[0], sqs)
+            } else {
+                hiddencrops[0] = sqs
+            }
+
+            mega_draw_matrix(megadata[episode].hiddens, context_matrix, col, can_pad, memst, hiddencrops[1], hiddencrops[2], hiddencrops[0]);
+
+        }
+    }
+
+    function brushmove() {
+    }
+
+
+    bod.on('click', '#salcon', function () {
+
+        opval = (opval === 0.5 ? 1 : 0.5);
+
+        $('.display-img').css('opacity', opval);
+
+    });
+
+
+    function maketime() {
+
+
+        $('#timebar').remove();
+        $('#timeline').append('<input id="timebar" list="steplist" style="outline: none;" type="range" min="0" max="' + (megadata[episode].actions.length - 1) + '" step="1" value="' + whichstep + '" >');
+
+        let tbar = $('#timebar');
+
+        let val = (tbar.val() - tbar.attr('min')) / (tbar.attr('max') - tbar.attr('min'));
+
+        tbar.css('background-image',
+            '-webkit-gradient(linear, left top, right top, '
+            + 'color-stop(' + val + ', #233E34), '
+            + 'color-stop(' + val + ', #C5C5C5)'
+            + ')'
+        );
+
+        $('#timeline input[type="range"]').on('input', function () {
+            let val = ($(this).val() - $(this).attr('min')) / ($(this).attr('max') - $(this).attr('min'));
+            whichstep = (parseInt($(this).val()) >= 0 ? parseInt($(this).val()) : 0);
+            update_step(whichstep);
+            update_line(whichstep);
+
+            $(this).css('background-image',
+                '-webkit-gradient(linear, left top, right top, '
+                + 'color-stop(' + val + ', #233E34), '
+                + 'color-stop(' + val + ', #C5C5C5)'
+                + ')'
+            );
+        });
+
+        let control = $('#timebar'),
+            controlMin = control.attr('min'),
+            controlMax = control.attr('max'),
+            controlVal = control.val();
+
+
+        let thumb = 10;
+
+        let range = controlMax - controlMin;
+        let position = ((controlVal - controlMin) / range) * 100;
+
+        let positionOffset = Math.round(thumb * position / 100) - (thumb / 2) + 20;
+        let output = $('#tooltip1');
+        output
+            .css('left', 'calc(' + position + '% - ' + positionOffset + 'px)')
+            .text(controlVal);
+
+    }
+
+    function reset() {
+        let ctx = context_matrix;
+        ctx.clearRect(0, 0, 99999, 915);
+        mega_draw_matrix(megadata[episode].hiddens, ctx, col, 0, memst, [], [], []);
+
+        hiddencrops = [[], [], []];
+    }
+
+    function hcrop() {
+        compact = !compact;
+        mega_draw_matrix(megadata[episode].hiddens, context_matrix, col, can_pad, memst, hiddencrops[1], hiddencrops[2], hiddencrops[0]);
+
+        if (compact) {
+            $('#compact').html(' <span class="fa fa-expand fa-lg" aria-hidden="true"></span>')
+        } else {
+            $('#compact').html(' <span class="fa fa-compress fa-lg" aria-hidden="true"></span>')
+
+        }
+    }
+
+    bod.on('change', '#sort-sel', function () {
+
+        sortype = $(this).val();
+        mega_draw_matrix(megadata[episode].hiddens, context_matrix, col, can_pad, memst, hiddencrops[1], hiddencrops[2], hiddencrops[0]);
+
+    });
+
+    bod.on('change', '#com-sel', function () {
+
+        combtype = $(this).val();
+
+
+    });
+
+
+    bod.on('input', '#timebar', function () {
+
+        let control = $(this),
+            controlMin = control.attr('min'),
+            controlMax = control.attr('max'),
+            controlVal = control.val();
+
+        let thumb = 10;
+
+        let range = controlMax - controlMin;
+        let position = ((controlVal - controlMin) / range) * 100;
+
+        let positionOffset = Math.round(thumb * position / 100) - (thumb / 2) + 20;
+        let output = $('#tooltip1');
+        output
+            .css('left', 'calc(' + position + '% - ' + positionOffset + 'px)')
+            .text(controlVal);
+    });
+
+
+    function sel2mask(data) {
+
+
+        console.log(data);
+
+        $('#epilist').append('<div style="opacity:0.5;background-color: steelblue;" class="epbox" id="boxepgen' + nb_gen + '"><img id="loadindep" src="/static/assets/loading.gif"></div>');
+        let res = [];
+
+        for (let i = 0; i < megadata[episode].hiddens[0].length; i++) {
+
+            if (data.includes(i)) {
+                res.push(1)
+            } else {
+                res.push(0.02)
+            }
+
+
+        }
+
+
+        let form = new FormData();
+
+        form.append('mask', res);
+
+        $.ajax({
+            type: "POST",
+            url: "/gen_epz",
+            processData: false,
+            contentType: false,
+            data: form,
+            success: function (d) {
+                let id = 'episode' + 'gen' + nb_gen;
+                nb_gen++;
+                megadata[id] = tofloat($.parseJSON(d));
+                $('#loadindep').replaceWith('<p> Gen </p>');
+                update_traj(megadata[id].positions, svg_traj, id)
+            }
+        });
+    }
+
+    function reverse_sel2mask(data) {
+
+        console.log(data);
+
+        $('#epilist').append('<div style="opacity:0.5;background-color: steelblue;" class="epbox" id="boxepgen' + nb_gen + '"><img id="loadindep" src="/static/assets/loading.gif"></div>');
+        let res = [];
+        for (let i = 0; i < megadata[episode].hiddens[0].length; i++) {
+
+            if (!data.includes(i)) {
+                res.push(1)
+            } else {
+                res.push(0.02)
+            }
+
+        }
+
+        let form = new FormData();
+
+        form.append('mask', res);
+
+        $.ajax({
+            type: "POST",
+            url: "/gen_epz",
+            processData: false,
+            contentType: false,
+            data: form,
+            success: function (d) {
+                let id = 'episode' + 'gen' + nb_gen;
+                nb_gen++;
+                megadata[id] = tofloat($.parseJSON(d));
+                $('#loadindep').replaceWith('<p> Gen </p>');
+                update_traj(megadata[id].positions, svg_traj, id)
+            }
+        });
+    }
+
+
+    function saveHandle() {
+
+        let temp = hiddencrops[2].map((d) => {
+            return old_res[d]
+        });
+
+        addinAnn(antarger, temp)
+
+    }
+
+
+    function updatenbh() {
+
+        $('#hiddensl').html(hiddencrops[2].length)
+    }
+
+    function intit_annot(svg) {
+
+
+        let angle = 30;
+
+
+        svg.append("line")
+            .attr("x1", 0)
+            .attr("y1", 100)
+            .attr("x2", (6 * 40) - 40)
+            .attr("y2", 100)
+            .style("stroke-width", '0.5')
+            .attr("stroke", "black");
+
+
+        for (let i = 0; i < 6; i++) {
+
+            let g = svg.append('g').attr('id', 'gr' + i);
+
+            g.append('rect')
+                .attr("x", i * 40)
+                .attr("y", 100)
+                .attr("width", 40)
+                .attr("height", ve_h * megadata[episode].hiddens[0].length + 80)
+                .style("stroke-width", '1')
+                .style("stroke", "rgb(166, 166, 166)")
+                .style('fill', 'none')
+                .attr('class', (i !== 1 ? 'annelbg ' : 'annelbg selcol'))
+                .attr('nb', i + 1)
+                .on('click', colclick)
+                .on('mouseover', colhov)
+                .on('mouseout', delhov);
+
+
+            g.append("line")
+                .attr("x1", i * 40)
+                .attr("y1", 100)
+                .attr("x2", i * 40 + angle)
+                .attr("y2", 5)
+                .style("stroke-width", '1.5')
+                .style("stroke", "rgb(166, 166, 166)");
+
+            if (i > 0) {
+                g.append('text')
+                    .text(tempna[i - 1])
+                    .attr('font-family', 'Helvetica')
+                    .attr('font-size', '14pt')
+                    .attr('text-anchor', 'start')
+                    .attr('transform', 'translate(' + (i) * 36 + ',100)rotate(-72)')
+                    .attr('class', 'annheader')
+                    .attr('nb', i)
+
+            }
+
+            updateAnn(i)
+
+        }
+        svg.append('text')
+            .text('Total')
+            .attr('font-family', 'Helvetica')
+            .attr('font-size', '14pt')
+            .attr('text-anchor', 'start')
+            .attr('transform', 'translate(' + (6) * 36 + ',100)rotate(-72)')
+            .attr('class', 'annheader')
+            .attr('nb', 6)
+
+    }
+
+
+    function colclick() {
+        let cla = $(this).attr('class');
+        antarger = $(this).attr('nb');
+
+        let cla2 = $('.selcol').attr('class');
+
+        if (cla !== cla2) {
+
+            if (cla2 !== undefined) {
+                cla2 = cla2.replace('selcol', '');
+                $('.selcol').attr('class', cla2);
+            }
+            cla += ' selcol';
+
+
+            $(this).attr('class', cla);
+
+            place_rect(d3.select('#annotate'), antarger, true)
+        }
+
+    }
+
+    function colhov() {
+        let tnb = $(this).attr('nb');
+        place_rect(d3.select('#annotate'), tnb, false)
+
+    }
+
+    function delhov() {
+        $('.hovrect').remove();
+
+    }
+
+
+    bod.on('click', '.annheader', function () {
+
+
+        let bbox = $('#chann');
+        let col = $(this).attr('nb');
+
+        if (col < 6) {
+
+            edit = true;
+
+            bbox.css('display', 'block');
+
+            bbox.val(tempna[col - 1]);
+
+            bbox.attr('nb', col);
+
+            place_rect(d3.select('#annotate'), col, false)
+        }
+
+    });
+
+
+    function place_rect(svg, col, flag) {
+
+        if (flag)
+            $('.clrect').remove();
+
+        $('.hovrect').remove();
+        svg.append('rect')
+            .attr('class', (flag ? 'clrect' : 'hovrect'))
+            .attr('x', '20')
+            .attr('y', '40')
+            .style('border', '0')
+            .style('fill', (flag ? 'rgb(238, 216, 129)' : 'rgb(254, 234, 169'))
+            .attr('width', '100')
+            .attr('height', '38')
+            .style('opacity', (flag ? '1' : '0.8'))
+            .style('transform', 'skewY(-13deg) skewX(-1.3deg) translate(' + (col - 2) * 40 + 'px,' + (105 + (col > 2 ? 10 : 10) * (col - 1)) + 'px) rotate(-72deg)').moveToBack()
+    }
+
+
+    function addinAnn(col, elems) {
+
+
+        tempar[col] = tempar[col].concat(elems).unique();
+
+        updateAnn(col)
+
+    }
+
+
+    function updateAnn(col) {
+
+        let st = 138;
+
+        let g = d3.select('#gr' + col);
+
+        g.selectAll('.aelem').remove();
+
+        for (let i = 0; i < tempar[col].length; i++) {
+
+            addElem(g, tempar[col][i], st, col)
+
+        }
+        updateTotal()
+
+    }
+
+    function addElem(g, id, st, col) {
+
+
+        d3.select('#gr' + col).append('rect')
+            .attr('x', (((col - 1) * 40) + 3) + 'px')
+            .attr('y', (st + (id * ve_h)) + 'px')
+            .attr('width', '34px')
+            .attr('height', (ve_h + 0.1) + 'px')
+            .style('fill', 'rgb(120, 120, 120)')
+            .attr('class', 'aelem')
+    }
+
+
+    function updateTotal() {
+
+
+        let svg = d3.select('#annotate');
+
+        svg.selectAll('.totelem').remove();
+        tempar[6] = [];
+        let tot = tempar.flat().unique();
+        let st = 158;
+
+
+        tempar[6] = tot;
+
+        for (let i = 0; i < tot.length; i++) {
+
+
+            svg.append('rect')
+
+                .attr('x', ((5 * 40) + 3) + 'px')
+                .attr('y', (st + (tot[i] * ve_h)) + 'px')
+                .attr('width', '34px')
+                .attr('height', (ve_h + 0.1) + 'px')
+                .style('fill', 'rgb(120, 120, 120)')
+                .attr('class', 'totelem')
+        }
+    }
+
+
+    function doTicks() {
+
+        $('.tick').remove();
+
+        let scx = d3.scaleLinear().domain([0, megadata[episode].health.length - 1]).range([0, twidth - 6]);
+
+        let svg = d3.select('#col1svg');
+
+        for (let i = 0; i < megadata[episode].health.length / 50; i++) {
+            svg.append('rect')
+                .attr('x', (scx(50 * i) + can_pad) + 'px')
+                .attr('y', (5) + 'px')
+                .attr('width', '2px')
+                .attr('height', (15) + 'px')
+                .style('fill', 'rgb(120, 120, 120)')
+                .attr('class', 'tick');
+
+            if (megadata[episode].health.length < 600) {
+                if (megadata[episode].health.length - (i * 50) > 10) {
+                    svg.append('text')
+                        .attr('font-family', 'Helvetica')
+                        .attr('x', (scx(50 * i) + can_pad - (50 * i < 100 ? 7 : 15)) + 'px')
+                        .attr('y', (35) + 'px')
+                        .style('color', 'rgb(120, 120, 120)')
+                        .attr('class', 'tick')
+                        .style('font-size', '12pt')
+                        .text(50 * i)
+
+                }
+            } else {
+
+                if (i % 2 === 0) {
+                    if (megadata[episode].health.length - (i * 50) > 10) {
+                        svg.append('text')
+                            .attr('font-family', 'Helvetica')
+                            .attr('x', (scx(50 * i) + can_pad - (50 * i < 100 ? 7 : 15)) + 'px')
+                            .attr('y', (35) + 'px')
+                            .style('color', 'rgb(120, 120, 120)')
+                            .attr('class', 'tick')
+                            .style('font-size', '12pt')
+                            .text(50 * i)
+                    }
+                }
+            }
+        }
+
+        svg.append('rect')
+            .attr('x', (scx(megadata[episode].health.length - 1) + can_pad) + 'px')
+            .attr('y', (5) + 'px')
+            .attr('width', '2px')
+            .attr('height', (15) + 'px')
+            .style('fill', 'rgb(120, 120, 120)')
+            .attr('class', 'tick');
+
+        svg.append('text')
+            .attr('font-family', 'Helvetica')
+            .attr('x', (scx(megadata[episode].health.length - 1) + can_pad - 15) + 'px')
+            .attr('y', (35) + 'px')
+            .style('color', 'rgb(120, 120, 120)')
+            .attr('class', 'tick')
+            .style('font-size', '12pt')
+            .text((megadata[episode].health.length - 1));
+
+
+        for (let i = 0; i < megadata[episode].health.length / 10; i++) {
+
+            if ((10 * i % 50) !== 0)
+                svg.append('rect')
+                    .attr('x', (scx(10 * i) + can_pad) + 'px')
+                    .attr('y', (5) + 'px')
+                    .attr('width', '1px')
+                    .attr('height', (10) + 'px')
+                    .style('fill', 'rgb(160, 160, 160)')
+                    .attr('class', 'tick')
+        }
+    }
+
+
+    function seesel(col) {
+
+        mega_draw_matrix(megadata[episode].hiddens, context_matrix, col, 0, memst, tempar[col], hiddencrops[2], []);
+    }
+
+
+    function delsel(col) {
+
+
+        tempar[col] = [];
+
+        tempna[col] = 'Default'
+
+    }
+
+
+    function make_slit(data, slice) {
+
+        let tot = 0;
+        console.log(slice);
+
+        for (let i = 0; i < data.length; i++) {
+
+
+            // let decal = map_act(probs[i - 1].indexOf('' + Math.max(...probs[i - 1])));
+            let decal = 0;
+
+            let image = new Image();
+            image.onload = function () {
+
+                context_matrix.drawImage(image, slice[0][0], slice[0][1], slice[1][0], slice[1][1], tot, (885 - 60), cw, 75);
+
+                tot += cw;
+
+            };
+
+
+            image.src = "data:image/jpeg;base64," + data[i]
+        }
+    }
+
+
+    function slit_go() {
+
+
+        let br = $("#slit_sel .selection");
+
+        let bw = parseFloat(br.attr("width"));
+        let bh = parseFloat(br.attr("height"));
+        let bx = parseFloat(br.attr("x"));
+        let by = parseFloat(br.attr("y"));
+
+        let svg_inp = d3.select('#slit_sel')
+
+        let tbbox = d3.select('#input').node().getBoundingClientRect();
+
+        let xttscale = d3.scaleLinear().domain([0, tbbox.width]).range([0, obs_width]);
+        let yttscale = d3.scaleLinear().domain([0, tbbox.height]).range([0, obs_height]);
+        make_slit(megadata[episode].inputs, [[xttscale(bx), yttscale(by)], [xttscale(bw), yttscale(bh)]])
+    }
+</script>
+
+<div id="loadall" style="width: 40%;position: absolute;z-index: 999;top: 40%;left: 30%;">
+    <div style="text-align: center;vertical-align: middle;width: 100%">
+        <p style="margin-bottom: 15px;font-size: 20pt"> Loading <span class="fa fa-spinner fa-spin fa-lg"></span></p>
+        <div style="width: 100%;height: 32px;background-color: lightgrey;border: #6d6b6e 1px solid;border-radius: 10px;">
+            <div class="progress"></div>
+        </div>
+    </div>
+</div>
+
+
+<div class="container" style="visibility: hidden;overflow-y: hidden">
+    <div style="grid-column: 1;grid-template-rows: 1fr 1fr 1fr 1fr;grid-row-gap: 5px;position: relative;max-width: 640px;min-width: 270px;min-height: 870px">
+        <div style="display: grid;grid-row: 1;max-height: 30%;text-align: center;padding: 10px" id="input-cont">
+
+            <svg id="slit_sel" style="width: 95%;    height: 220px;position: absolute;z-index: 300">
+
+            </svg>
+
+
+            <p id="stepind"
+               style="display: inline-block;top:12px;left:5%;position: absolute;opacity: 1 !important;z-index: 200;color: white;font-weight: 600">
+                0</p>
+            <svg id="distrib-svg" width="80" height="80" viewBox="0 0 80 80"
+                 style="display: inline-block;top:16px;right:16px;position: absolute;background-color: white;opacity: 1 !important;z-index: 200">
+
+
+            </svg>
+            <div id="input" style="background-size: contain;z-index: 100;max-height: min-content">
+
+
+            </div>
+            <div>
+
+                <div style="vertical-align: text-top;display: inline-block;color: #fff;z-index: 888;min-width: 5%;text-align: center;margin:5px"
+                     id="buttons">
+                    <div>
+                        <button type="button" id="slit_go" class="btn btn-default btn-lg" style="margin-right: 15px"
+                                aria-label="Left Align" onclick="slit_go()">
+                            slit
+                        </button>
+
+                        <button type="button" id="salcon" class="btn btn-default btn-lg" style="margin-right: 15px"
+                                aria-label="Left Align">
+                            <i class="fa fa-adjust fa-lg"></i>
+                        </button>
+
+                        <button type="button" id="thong" class="btn btn-default btn-lg" onclick="backward()"
+                                aria-label="Left Align">
+                            <span class="fa fa-arrow-left fa-lg" aria-hidden="true"></span>
+                        </button>
+                        <button type="button" id="auto" class="btn btn-default btn-lg" onclick="switchauto()"
+                                aria-label="Left Align">
+                            <span class="fa fa-play fa-lg" aria-hidden="true"></span>
+                        </button>
+                        <button type="button" id="thing" class="btn btn-default btn-lg" onclick="forward()"
+                                style="margin-right: 15px" aria-label="Left Align">
+                            <span class="fa fa-arrow-right fa-lg" aria-hidden="true"></span>
+                        </button>
+
+
+                        <button type="button" id="res" class="btn btn-default btn-lg" onclick="reset()"
+                                aria-label="Left Align">
+                            <span class="fa fa-repeat fa-lg" aria-hidden="true"></span>
+                        </button>
+
+                        <button type="button" id="compact" class="btn btn-default btn-lg" onclick="hcrop()"
+                                aria-label="Left Align">
+                            <span class="fa fa-compress fa-lg" aria-hidden="true"></span>
+                        </button>
+
+
+                        <select id="sort-sel" class="btn"
+                                style="padding: 4px;width: auto;font-weight: 700;margin-top: 5px">
+                            <option value="0">No sort</option>
+                            <option value="1">Activation</option>
+                            <option value="2">Change</option>
+                            <option value="3">Stable</option>
+                            <option value="4">Similar</option>
+                            <option value="5">Projection</option>
+                            <option value="6">Projection Abs</option>
+                        </select>
+
+                        <select id="com-sel" class="btn"
+                                style="padding: 4px;width: auto;font-weight: 700;margin-top: 5px">
+                            <option value="0">Erase</option>
+                            <option value="1">Union</option>
+                            <option value="2">Intersec</option>
+
+                        </select>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div style="grid-row: 2;text-align: center;height: 30%;">
+            <svg id="trajs" width="90%" height="90%" style="padding: 5px;">
+
+            </svg>
+        </div>
+        <div style="grid-row: 3;text-align: center;height: 30%;margin-top: 2%">
+            <svg id="tsne" width="90%" height="80%" style="padding: 5px;cursor: crosshair">
+
+            </svg>
+
+        </div>
+
+        <!--        <div style="grid-row: 4;height: 10%;margin-top: 2%">-->
+        <!--            <div style="height: 60px;text-align: center;position: relative">-->
+        <!--                <div id="epilist" style="text-align: center;overflow-x: auto">-->
+
+        <!--                </div>-->
+        <!--                <div>-->
+        <!--                    <img class="plusep"-->
+        <!--                         style="height: 25px;width: auto;border: black 2px solid;padding: 2px;position: absolute;right: 5%;top:40%"-->
+        <!--                         src="/static/assets/001-plus-1.png">-->
+        <!--                </div>-->
+        <!--            </div>-->
+
+
+        <!--        </div>-->
+    </div>
+
+
+    <div id='nb1' style="padding-top:10px;grid-column: 2;min-width: 720px;overflow-y: hidden">
+        <div style="height: 26px;width: 100%">
+
+            <button onclick="saveHandle()" type="button" class="btn btn-default btn-lg"
+                    style="margin: 0;float: right;margin-right: 10px;font-weight: 700;width:auto;">Save
+            </button>
+
+
+            <div style="width: 80%;margin-top: 2%;display: inline-block;position: relative;margin-left:5px"
+                 id="timeline">
+
+                <output id="tooltip1" name="rangeVal">50</output>
+
+                <h3 style="position: relative;top:-45px;left:48%;width: 70px">Steps</h3>
+            </div>
+        </div>
+        <div style="min-height: 700px;min-width: 600px">
+
+
+            <svg class="evsvg" style="margin-top: 3px;margin-left: 50px" id="col1svg">
+
+            </svg>
+
+
+            <canvas height="2850" width="24948" id="matrix-canvas" style="margin-left: 74px"></canvas>
+
+
+            <div style="float: right;margin-top: 36px;text-align: center">
+                <p id="hiddensl" style="width: 78%">
+
+                </p>
+
+                <svg width="95" height="480" style="" id="currhidd">
+
+                </svg>
+            </div>
+            <div style="height: 400px;overflow-y: scroll;margin-top: -86px;width: 100%">
+                <svg id="timelien" width="100%" height="900px" style="float: right;margin-right: 10px">
+
+                </svg>
+            </div>
+        </div>
+
+
+    </div>
+
+    <div style="grid-column: 3;text-align: center;position: relative;padding-top: 10px;min-width: 240px">
+        <svg id="annotate" style="width: 240px;height: 80%;margin-top: 20px">
+        </svg>
+
+
+        <input id="chann" type="text" maxlength="17" minlength="2"
+               style="position: absolute;padding: 5px;left: 45px;top: 0;display: none">
+    </div>
+
+
+</div>
+
+
+<script>
+
+
+</script>
+
+
+</body>
+</html>

@@ -20,7 +20,7 @@ let line = d3.line()
         return traj_y(d[1]);
     });
 
-let myWorker = new Worker("static/js/worker.js");
+let myWorker = new Worker("/static/js/worker.js");
 
 
 function changeHighlight() {
@@ -33,8 +33,28 @@ function changeHighlight() {
 
 function draw_traj(data, svg, width, height) {
 
-    let mapx = [0, 2000];
-    let mapy = [0, 2000];
+    let mapx, mapy;
+
+    if (scenario === 'health_gathering_supreme') {
+        mapx = [0, 2000];
+        mapy = [0, 2000];
+
+    } else if (scenario === 'two_col') {
+        mapx = [-800, 500];
+        mapy = [-800, 500];
+
+    } else if (scenario === 'my_way_home') {
+        mapx = [200, 1200];
+        mapy = [-600, 100];
+
+    } else if (scenario === 'arnold') {
+        mapx = [-2000, -200];
+        mapy = [2000, 3800];
+
+    } else {
+        mapx = [-650, 500];
+        mapy = [-650, 500];
+    }
 
     traj_x = d3.scaleLinear().range([0, width]);
     traj_y = d3.scaleLinear().range([height, 0]);
@@ -117,7 +137,8 @@ function updatehps(svg, data, step) {
                 .attr("class", "hp")
                 .attr('cx', traj_x(data[step][i].object_position_x) - 2.5)
                 .attr('cy', traj_y(data[step][i].object_position_y) - 2.5)
-                .attr('fill', (data[step][i].object_name === 'Poison' ? 'red' : (!objids.includes(data[step][i].object_id) ? 'orange' : 'green')))
+                // .attr('fill', (data[step][i].object_name === 'Poison' ? 'red' : (!objids.includes(data[step][i].object_id) ? 'orange' : 'green')))
+                .attr('fill', (time_colors[item_ord.indexOf(data[step][i].object_name)]))
                 .attr("r", 5)
                 .style('opacity', '0.8');
 
@@ -159,7 +180,7 @@ function update_ts(svg) {
 function makeState(svg, data) {
 
     myWorker.terminate();
-    myWorker = new Worker("static/js/worker.js");
+    myWorker = new Worker("/static/js/worker.js");
 
     let svbbox = svg.node().getBoundingClientRect();
     ts_y = d3.scaleLinear().rangeRound([svbbox.height - 10, 0]);
@@ -251,5 +272,4 @@ function updateDomain(data) {
         return d[1];
     }) + 2]);
 }
-
 

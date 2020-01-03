@@ -172,11 +172,11 @@ function new_sortSim(data, gdata, hact) {
 
 
 function mega_draw_matrix(data, context, colorScale, offx, offy, vactivs, zoom, hactivs) {
-
+    console.log(cw);
     let rdata = hiddenHandler(data, vactivs, zoom, hactivs, sortype);
 
     console.time('Drawing matrix');
-    context.clearRect(0, 0, 99900, 915);
+    context.clearRect(0, 0, 99900, 885-60);
 
     let size = Math.min((mem_height / rdata[0].length), 60);
 

@@ -5,6 +5,8 @@ function toImage(im, clas, styl) {
 
 
 function tofloat(data) {
+    console.log(data);
+
     data.hiddens = data.hiddens.slice(0, data.hiddens.length).map(function (d) {
         for (let i = 0; i < d.length; i++) {
             d[i] = parseFloat(d[i])

@@ -1,11 +1,13 @@
-let positions = [[0, 1], [2, 1], [1, 0], [1, 2], [0, 0], [0, 2], [2, 0], [2, 2]]; // Binds acts to square partitions
-
+let positions; // Binds acts to square partitions
+let or;
 
 let sz = d3.scaleOrdinal()
     .range(["#8dd3c7", "#ffffb3", "#bebada", "#fb8072", "#80b1d3", "#fdb462", "#b3de69", "#fccde5"]);
 
 
 function draw_line(data, svg, width, height) {
+
+    set_pos();
 
     let wratio = width / 3;
     let hratio = height / 3;
@@ -69,7 +71,7 @@ function draw_line(data, svg, width, height) {
             })
             .attr("width", wratio)
             .attr("height", () => {
-                return hratio - y(data[i]);
+                return Math.max(0, hratio - y(data[i]));
             })
             .attr('fill', () => {
                 return sz(i);
@@ -103,11 +105,10 @@ function draw_line(data, svg, width, height) {
 
 function rotate_arrow(act) {
 
-    let or = ['270 38.4 40', '90 40 41.6', '0 38.4 38.4', '180 39.04 41.6', '315 36.8 40', '225 38.4 41.6', '45 44.8 44.8', '135 40 41.6'];
 
-    let nor = ['270','90','0','180','315','225','45','135'];
+    let inx = megadata[episode].probabilities[whichstep].indexOf(Math.max(...megadata[episode].probabilities[whichstep]));
 
-    d3.select('#dir_arrow').attr('transform', 'rotate(' + or[act] + ')')
+    d3.select('#dir_arrow').attr('transform', 'rotate(' + or[inx] + ')')
 
 }
 
@@ -125,7 +126,7 @@ function update_bars(data, svg, width, height, act) {
 
 function draw_bar(svg, hratio, pos, value, color, i) {
 
-    let y = d3.scaleLinear().rangeRound([hratio, 0]).domain([0, 0.95]);
+    let y = d3.scaleLinear().rangeRound([hratio, 0]).domain([0.01, 0.99]);
 
 
     svg.selectAll('.bar[nb="' + i + '"]').transition()
@@ -140,5 +141,21 @@ function draw_bar(svg, hratio, pos, value, color, i) {
             return color;
         })
 
+
+}
+
+
+function set_pos() {
+    if (megadata[episode].probabilities[0].length > 5) { // FULL
+        positions = [[0, 1], [2, 1], [1, 0], [1, 2], [0, 0], [0, 2], [2, 0], [2, 2]];
+        or = ['270 38.4 40', '90 40 41.6', '0 38.4 38.4', '180 39.04 41.6', '315 36.8 40', '225 38.4 41.6', '45 44.8 44.8', '135 40 41.6']
+    } else if (megadata[episode].probabilities[0].length === 5) {
+        positions = [[0, 1], [2, 1], [1, 0], [0, 0], [2, 0]];
+        or = or = ['270 38.4 40', '90 40 41.6', '0 38.4 38.4', '315 36.8 40', '45 44.8 44.8']
+    } else {
+        console.log('Hey');
+        positions = [[0, 1], [2, 1], [1, 0], [1, 2]];
+        or = ['270 38.4 40', '90 40 41.6', '0 38.4 38.4', '180 39.04 41.6']
+    }
 
 }
