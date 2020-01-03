@@ -12,10 +12,10 @@ Authors: Theo Jaunet, Romain Vuillemot, Christian Wolf
 This repository contains the front-end of DRLViz, a visual analytics tool to explore the memory of agents trained with Deep Reinforcement learning.
 
 
-<img src="https://github.com/sical/drlviz/blob/master/static/assets/item.png" heigh="400">
+<img src="https://github.com/sical/drlviz/blob/master/static/assets/item.png" height="400">
 
 ![teaser]
-(https://github.com/sical/drlviz/blob/master/static/assets/item.png =x400)
+(https://github.com/sical/drlviz/blob/master/static/assets/item.png)
 
 
 ## Live Demo
