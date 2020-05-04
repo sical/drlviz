@@ -4,6 +4,11 @@ function toImage(im, clas, styl) {
 }
 
 
+function toSrc(im) {
+
+    return "data:image/jpeg;base64," + im ;
+}
+
 function tofloat(data) {
     console.log(data);
 

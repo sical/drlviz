@@ -7,7 +7,7 @@ let svgbound = [109 + 12, 748 + 3];
 let sswidth;
 let padding = 18;
 let rowh = 0;
-let label_pad = 110;
+let label_pad = 93;
 let y_offset = 12;
 let item_ord;
 let time_colors = ["#66aa00", "#dc3912", "#ff9900", "#109618", "#990099", "#0099c6", "#dd4477", "#3366cc", "#b82e2e", "#316395", "#994499", "#22aa99", "#aaaa11", "#6633cc", "#e67300", "#8b0707", "#651067", "#329262", "#5574a6", "#3b3eac"];

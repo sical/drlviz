@@ -65,7 +65,8 @@
 
 
     </script>
-<body style="overflow-y: hidden;max-width: 1800px;max-height: 1000px;text-align: center;margin: auto ">
+<body style="max-width: 1800px;max-height: 1000px;    min-width: 1600px;
+    min-height: 900px;text-align: center;margin: auto ">
 
 <script>
 
@@ -164,6 +165,22 @@
 
         mega_draw_matrix(megadata[episode].hiddens, context_matrix, col, can_pad, memst, hiddencrops[1], hiddencrops[2], hiddencrops[0]);
     };
+
+
+    function filtGroup(id) {
+
+        hiddencrops[2] = tempar[parseInt(id)]
+        mega_draw_matrix(megadata[episode].hiddens, context_matrix, col, can_pad, memst, hiddencrops[1], hiddencrops[2], hiddencrops[0]);
+
+
+    }
+
+    function reset2() {
+
+        hiddencrops[2] = [];
+        mega_draw_matrix(megadata[episode].hiddens, context_matrix, col, can_pad, memst, hiddencrops[1], hiddencrops[2], hiddencrops[0]);
+
+    }
 
 
     function steps2sqs(array) {
@@ -288,7 +305,7 @@
         let ctx = context_matrix;
         ctx.clearRect(0, 0, 99999, 12000);
         mega_draw_matrix(megadata[episode].hiddens, ctx, col, 0, memst, [], hiddencrops[2], []);
-        draw_metrics(megadata[episode], ctx, 0, 915);
+        draw_metrics(megadata[episode], ctx, 0, 895);
 
         if (episode !== 'all' || nb_ep <= 3)
             makeState(svg_tsne, megadata[episode].hiddens);
@@ -356,6 +373,7 @@
         }
         maketime();
     }
+
 
     function fastb() {
 
@@ -602,7 +620,7 @@
             svg_col1 = d3.select('#col1svg');
             canvas_matrix = d3.select('#matrix-canvas');
 
-            let theight = $(window).height() * 0.97 - 300;
+            let theight = 750;
             //235
             twidth = $('#matrix-canvas').parent().width() - 255;
 
@@ -631,12 +649,12 @@
 
 
             let rest = (theight * 542) / 685;
-            d3.select('#currhidd').style('height', rest + 15);
+            // d3.select('#currhidd').style('height', rest + 15);
             ve_init_rows(d3.select('#currhidd'), megadata[episode].hiddens[whichstep], rest);
 
             mega_draw_matrix(megadata[episode].hiddens, context_matrix, col, 0, memst, [], [], []);
 
-            draw_metrics(megadata[episode], context_matrix, 0, 915);
+            draw_metrics(megadata[episode], context_matrix, 0, 895);
             init_svg(can_pad, 5, $('#col1svg').height());
             draw_obs();
 
@@ -708,8 +726,6 @@
 
     function reportWindowSize() {
 
-
-        console.log('heu');
 
         let tbbox = svg_traj.node().getBoundingClientRect();
 
@@ -794,7 +810,7 @@
 
     function init_svg(offx, offy, height) {
 
-        let scx = d3.scaleLinear().domain([0, megadata[episode].health.length - 1]).range([0, twidth - 6]);
+        let scx = d3.scaleLinear().domain([0, megadata[episode].health.length - 1]).range([0, 900]);
 
         let svg = svg_col1;
 
@@ -802,7 +818,7 @@
         svg.append("g")
             .attr("class", "brush")
             .call(d3.brushX()
-                .extent([[offx, 0], [twidth + 6, height]])
+                .extent([[offx, 0], [900 - 4, height]])
                 .on('brush', brushmove)
                 .on('end', brushend)
             );
@@ -924,10 +940,11 @@
     }
 
     function draw_obs() {
-
-        $("#input").html("").append(toImage(megadata[episode].inputs[(whichstep > 0 ? whichstep : whichstep)], 'display-img', 'opacity:' + opval + ';'));
+        $("#input img").attr("src",toSrc(megadata[episode].inputs[(whichstep > 0 ? whichstep : whichstep)], 'display-img', 'opacity:' + opval + ';'));
+        // $("#input").end(toImage(megadata[episode].inputs[(whichstep > 0 ? whichstep : whichstep)], 'display-img', 'opacity:' + opval + ';'));
         if (megadata[episode].saliencies !== undefined)
             if (megadata[episode].saliencies.length > 0)
+                $("#input img").css("opacity",opval);
                 $("#input").css('background-image', "url(data:image/jpeg;base64," + megadata[episode].saliencies[(whichstep > 0 ? whichstep : whichstep)] + ')');
 
     }
@@ -1035,11 +1052,11 @@
             mega_draw_matrix(megadata[episode].hiddens, context_matrix, col, can_pad, memst, hiddencrops[1], hiddencrops[2], []);
         } else {
 
-            let scx = d3.scaleLinear().domain([0, megadata[episode].health.length - 1]).range([0, twidth - 10]);
+            let scx = d3.scaleLinear().domain([0, megadata[episode].health.length - 1]).range([22, 900 - 4]);
             let x = parseFloat(br.css('x').slice(0, -2));
             let width = parseFloat(br.css('width').slice(0, -2));
 
-            let sqs = [[Math.max(0, Math.round(scx.invert(x)) - 10), Math.min(Math.round(scx.invert(x + width)) - 10, megadata[episode].health.length - 1)]];
+            let sqs = [[Math.max(0, Math.round(scx.invert(x))), Math.min(Math.round(scx.invert(x + width)), megadata[episode].health.length - 1)]];
 
             if (combtype === "0") {
                 hiddencrops[0] = sqs
@@ -1291,7 +1308,7 @@
                 .attr("x", i * 40)
                 .attr("y", 100)
                 .attr("width", 40)
-                .attr("height", ve_h * megadata[episode].hiddens[0].length + 80)
+                .attr("height", ve_h * (megadata[episode].hiddens[0].length + 2))
                 .style("stroke-width", '1')
                 .style("stroke", "rgb(166, 166, 166)")
                 .style('fill', 'none')
@@ -1314,7 +1331,7 @@
                 g.append('text')
                     .text(tempna[i - 1])
                     .attr('font-family', 'Helvetica')
-                    .attr('font-size', '14pt')
+                    .attr('font-size', '12pt')
                     .attr('text-anchor', 'start')
                     .attr('transform', 'translate(' + (i) * 36 + ',100)rotate(-72)')
                     .attr('class', 'annheader')
@@ -1323,12 +1340,14 @@
             }
 
             updateAnn(i)
+            $("#ann_but").append("<button onclick='filtGroup(" + (i + 1) + ")' class='btn' style='position:absolute;margin: 0;left: " + (5 + (40 * i)) + "px'><i class=\" fa fa-filter\"></i>\n" +
+                "\n </button>")
 
         }
         svg.append('text')
             .text('Total')
             .attr('font-family', 'Helvetica')
-            .attr('font-size', '14pt')
+            .attr('font-size', '12pt')
             .attr('text-anchor', 'start')
             .attr('transform', 'translate(' + (6) * 36 + ',100)rotate(-72)')
             .attr('class', 'annheader')
@@ -1424,7 +1443,7 @@
 
     function updateAnn(col) {
 
-        let st = 138;
+        let st = 106;
 
         let g = d3.select('#gr' + col);
 
@@ -1440,7 +1459,7 @@
     }
 
     function addElem(g, id, st, col) {
-
+        console.log(id)
 
         d3.select('#gr' + col).append('rect')
             .attr('x', (((col - 1) * 40) + 3) + 'px')
@@ -1460,7 +1479,7 @@
         svg.selectAll('.totelem').remove();
         tempar[6] = [];
         let tot = tempar.flat().unique();
-        let st = 158;
+        let st = 106;
 
 
         tempar[6] = tot;
@@ -1588,7 +1607,7 @@
             let image = new Image();
             image.onload = function () {
 
-                context_matrix.drawImage(image, slice[0][0], slice[0][1], slice[1][0], slice[1][1], tot, (885 - 60), cw, 75);
+                context_matrix.drawImage(image, slice[0][0], slice[0][1], slice[1][0], slice[1][1], tot, (875 - 60), cw, 75);
 
                 tot += cw;
 
@@ -1618,6 +1637,8 @@
         let yttscale = d3.scaleLinear().domain([0, tbbox.height]).range([0, obs_height]);
         make_slit(megadata[episode].inputs, [[xttscale(bx), yttscale(by)], [xttscale(bw), yttscale(bh)]])
     }
+
+
 </script>
 
 <div id="loadall" style="width: 40%;position: absolute;z-index: 999;top: 40%;left: 30%;">
@@ -1630,9 +1651,9 @@
 </div>
 
 
-<div class="container" style="visibility: hidden;overflow-y: hidden">
+<div class="container" style="visibility: hidden;padding-right: 10px">
     <div style="grid-column: 1;grid-template-rows: 1fr 1fr 1fr 1fr;grid-row-gap: 5px;position: relative;max-width: 640px;min-width: 270px;min-height: 870px">
-        <div style="display: grid;grid-row: 1;max-height: 30%;text-align: center;padding: 10px" id="input-cont">
+        <div style="display: grid;grid-row: 1;text-align: center;padding: 10px" id="input-cont">
 
             <svg id="slit_sel" style="width: 95%;    height: 220px;position: absolute;z-index: 300">
 
@@ -1647,8 +1668,8 @@
 
 
             </svg>
-            <div id="input" style="background-size: contain;z-index: 100;max-height: min-content">
-
+            <div id="input" style="background-size: contain;z-index: 100;max-height: min-content" height="206">
+            <img src="" class="display-img" height="206">
 
             </div>
             <div>
@@ -1656,9 +1677,10 @@
                 <div style="vertical-align: text-top;display: inline-block;color: #fff;z-index: 888;min-width: 5%;text-align: center;margin:5px"
                      id="buttons">
                     <div>
-                        <button type="button" id="slit_go" class="btn btn-default btn-lg" style="margin-right: 15px"
+                        <button type="button" id="slit_go" class="btn btn-default btn-lg"
+                                style="font-weight:bolder;margin-right: 15px"
                                 aria-label="Left Align" onclick="slit_go()">
-                            slit
+                            Slit
                         </button>
 
                         <button type="button" id="salcon" class="btn btn-default btn-lg" style="margin-right: 15px"
@@ -1743,15 +1765,11 @@
     </div>
 
 
-    <div id='nb1' style="padding-top:10px;grid-column: 2;min-width: 720px;overflow-y: hidden">
+    <div id='nb1' style="padding-top:10px;grid-column: 2;min-width: 720px">
         <div style="height: 26px;width: 100%">
 
-            <button onclick="saveHandle()" type="button" class="btn btn-default btn-lg"
-                    style="margin: 0;float: right;margin-right: 10px;font-weight: 700;width:auto;">Save
-            </button>
 
-
-            <div style="width: 80%;margin-top: 2%;display: inline-block;position: relative;margin-left:5px"
+            <div style="width: 80%;margin-top: 2%;display: inline-block;position: relative;margin-left:-76px"
                  id="timeline">
 
                 <output id="tooltip1" name="rangeVal">50</output>
@@ -1770,12 +1788,17 @@
             <canvas height="2850" width="24948" id="matrix-canvas" style="margin-left: 74px"></canvas>
 
 
-            <div style="float: right;margin-top: 36px;text-align: center">
-                <p id="hiddensl" style="width: 78%">
+            <div style="position:relative;float: right;margin-top: 38px;padding-right: 32px;text-align: center">
+                <div style=";position: absolute;top:-28px;left: 10px; width:75px">
+                    <p id="hiddensl" style="width: 78%;display: inline;margin-top: 2px">
 
-                </p>
+                    </p>
+                    <button onclick="saveHandle()" type="button" class="btn btn-default btn-lg"
+                            style="margin: 0;float: right;margin-right: 10px;font-weight: 700;width:auto;">Save
+                    </button>
+                </div>
 
-                <svg width="95" height="480" style="" id="currhidd">
+                <svg width="95" height="608" style="" id="currhidd">
 
                 </svg>
             </div>
@@ -1790,8 +1813,15 @@
     </div>
 
     <div style="grid-column: 3;text-align: center;position: relative;padding-top: 10px;min-width: 240px">
-        <svg id="annotate" style="width: 240px;height: 80%;margin-top: 20px">
+        <svg id="annotate" style="width: 240px;height: 705px;margin-top: -32px">
         </svg>
+        <div id="ann_but" style="position:relative;width: 240px;margin-top: -5px">
+            <button type="button" style=" position: relative;left: -140px;margin: 0" class="btn btn-default btn-lg"
+                    onclick="reset2()"
+                    aria-label="Left Align">
+                <span class="fa fa-repeat fa-lg" aria-hidden="true"></span>
+            </button>
+        </div>
 
 
         <input id="chann" type="text" maxlength="17" minlength="2"

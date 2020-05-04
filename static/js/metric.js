@@ -56,8 +56,8 @@ function event_line(data, context, offx, offy) {
 
 
 function stream_acts(data, context, offx, offy) {
-    let scx = d3.scaleLinear().domain([0, megadata[episode].health.length]).range([0, ((twidth - 6) * ratio)]);
-    let scy = d3.scaleLinear().domain([0, 1]).range([0, 30]);
+    let scx = d3.scaleLinear().domain([0, megadata[episode].health.length]).range([0, ((twidth -5) * ratio)]);
+    let scy = d3.scaleLinear().domain([0, 1]).range([0, 75]);
 
     let colors = ["#8dd3c7", "#ffffb3", "#bebada", "#fb8072", "#80b1d3", "#fdb462", "#b3de69", "#fccde5"];
 

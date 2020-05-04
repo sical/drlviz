@@ -2,6 +2,13 @@ input[type='range']::selection {
     border: 0
 }
 
+#timelien {
+
+
+    cursor: move;
+    
+}
+
 .progress {
     display: block;
     text-align: center;
@@ -69,15 +76,14 @@ h3, img, i, p, button, span, h2, div, text {
 
 .container {
     display: grid;
-    grid-template-columns: 1fr 3fr 0.7fr;
+    grid-template-columns: 1fr 3fr 0.6fr;
     grid-template-rows: 1fr;
     /*grid-column-gap: 10px;*/
     /*grid-row-gap: 5px;*/
     justify-items: stretch;
     align-items: stretch;
-    height: calc(100vh - 16px);
-    width: 100%;
-
+    width: 1750px;
+    max-height: 950px;
 }
 
 .lowop {
@@ -604,7 +610,7 @@ output {
 
 #annotate rect, .annheader {
     pointer-events: all;
-    cursor: pointer;
+    /*cursor: pointer;*/
 }
 
 .selcol {
