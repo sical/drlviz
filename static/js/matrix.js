@@ -206,7 +206,7 @@ function mega_draw_matrix(data, context, colorScale, offx, offy, vactivs, zoom, 
                     nb++
                 }
                 make_link(context, [hactivs[h][0] * cw, 20.5], [hactivs[h][1] * cw, 20.5], [(c_st + tgap + nb) * cw, offy], [(c_st + tgap + (nb - (hactivs[h][1] - hactivs[h][0]))) * cw, offy]);
-                make_link(context, [hactivs[h][1] * cw, 915], [hactivs[h][0] * cw, 915], [(c_st + tgap + (nb - (hactivs[h][1] - hactivs[h][0]))) * cw, offy + (rdata[0].length * size)], [(c_st + tgap + nb) * cw, offy + (rdata[0].length * size)]);
+                // make_link(context, [hactivs[h][1] * cw, 915], [hactivs[h][0] * cw, 915], [(c_st + tgap + (nb - (hactivs[h][1] - hactivs[h][0]))) * cw, offy + (rdata[0].length * size)], [(c_st + tgap + nb) * cw, offy + (rdata[0].length * size)]);
 
             }
 
