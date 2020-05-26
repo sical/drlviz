@@ -114,19 +114,19 @@ This script allows you to select the memory order you want, and the number of el
 If you find this usefull, consider citing the following:
 ```
 Theo Jaunet, Romain Vuillemot, Christian Wolf DRLViz: Understanding Decisions and Memory
-in Deep Reinforcement Learning url: http://arxiv.org/abs/1909.02982
+in Deep Reinforcement Learning url: https://diglib.eg.org/handle/10.1111/cgf13962
 ```
 
 
 ```
-@article{jaunet2019drlviz,
-    title={DRLViz: Understanding Decisions and Memory in Deep Reinforcement Learning},
-    author={Theo Jaunet and Romain Vuillemot and Christian Wolf},
-    year={2019},
-    eprint={1909.02982},
-    archivePrefix={arXiv},
-    primaryClass={cs.LG},
-    url={http://arxiv.org/abs/1909.02982}
+@article {10.1111:cgf.13962,
+journal = {Computer Graphics Forum},
+title = {{DRLViz: Understanding Decisions and Memory in Deep Reinforcement Learning}},
+author = {Jaunet, Theo and Vuillemot, Romain and Wolf, Christian},
+year = {2020},
+publisher = {The Eurographics Association and John Wiley & Sons Ltd.},
+ISSN = {1467-8659},
+DOI = {10.1111/cgf.13962}
 }
 
 ```
